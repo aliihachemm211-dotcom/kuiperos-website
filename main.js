@@ -55,17 +55,24 @@ mm.add('(prefers-reduced-motion: no-preference)', () => {
     .to('.opener-pivot',     { autoAlpha: 1, y: 0, duration: 0.20 }, 0.64)
     .to({}, { duration: 0.16 }); /* hold on the pivot line before unpinning */
 
-  /* --- Act 1 — Contact: pinned ~1x viewport (fast pacing) --- */
-  gsap.set('#anchor',        { autoAlpha: 0, y: 70, z: -220 });
-  gsap.set('.auto-reply',    { autoAlpha: 0, y: 60, z: -160 });
-  gsap.set('.form-card',     { autoAlpha: 0, y: 80, z: -180 });
-  gsap.set('.capture-stamp', { autoAlpha: 0, scale: 0.92 });
+  /* --- Act 1 — Contact: pinned exactly 1x viewport (fast pacing) ---
+     Depth choreography: each element travels a long way on the z-axis
+     (roughly half the perspective distance, so its apparent size roughly
+     doubles as it arrives), and opacity resolves in the FIRST third of the
+     travel — the growth happens fully visible, not hidden inside a fade.
+     As each new beat lands, the previous elements get pushed slightly
+     deeper, like a camera rebalancing on the newest subject. */
+  gsap.set('#anchor',        { autoAlpha: 0, y: 150, z: -850 });
+  gsap.set('.auto-reply',    { autoAlpha: 0, y: 130, z: -780 });
+  gsap.set('.form-card',     { autoAlpha: 0, y: 140, z: -820 });
+  gsap.set('.capture-stamp', { autoAlpha: 0, z: 330 }); /* from the viewer's side, pressed onto the page */
   gsap.set('.tick-line',     { scaleY: 0, transformOrigin: 'top center' });
   gsap.set('.tick-label',    { autoAlpha: 0 });
 
   gsap.timeline({
     defaults: { ease: 'none' },
     scrollTrigger: {
+      id: 'act1',
       trigger: '#act-1',
       start: 'top top',
       end: '+=100%',
@@ -74,21 +81,28 @@ mm.add('(prefers-reduced-motion: no-preference)', () => {
       invalidateOnRefresh: true
     }
   })
-    /* beat 1 — the anchor arrives from depth */
-    .to('#anchor', { autoAlpha: 1, y: 0, z: 0, duration: 0.16 }, 0)
+    /* beat 1 — the anchor flies in from deep space */
+    .to('#anchor', { autoAlpha: 1, duration: 0.05 }, 0)
+    .to('#anchor', { y: 0, z: 0, duration: 0.16 }, 0)
     /* tick +00:03s draws downward */
-    .to('.tick-1 .tick-line',  { scaleY: 1, duration: 0.06 }, 0.16)
-    .to('.tick-1 .tick-label', { autoAlpha: 1, duration: 0.05 }, 0.18)
-    /* beat 2 — the system speaks */
-    .to('.auto-reply', { autoAlpha: 1, y: 0, z: 0, duration: 0.17 }, 0.22)
+    .to('.tick-1 .tick-line',  { scaleY: 1, duration: 0.05 }, 0.14)
+    .to('.tick-1 .tick-label', { autoAlpha: 1, duration: 0.04 }, 0.16)
+    /* beat 2 — the system speaks; the anchor settles back */
+    .to('.auto-reply', { autoAlpha: 1, duration: 0.05 }, 0.20)
+    .to('.auto-reply', { y: 0, z: 0, duration: 0.16 }, 0.20)
+    .to('#anchor',     { z: -70, duration: 0.16 }, 0.20)
     /* tick +00:30s */
-    .to('.tick-2 .tick-line',  { scaleY: 1, duration: 0.06 }, 0.39)
-    .to('.tick-2 .tick-label', { autoAlpha: 1, duration: 0.05 }, 0.41)
-    /* beat 3 — the qualifying form */
-    .to('.form-card', { autoAlpha: 1, y: 0, z: 0, duration: 0.21 }, 0.45)
-    /* beat 4 — captured */
-    .to('.capture-stamp', { autoAlpha: 1, scale: 1, duration: 0.10 }, 0.70)
-    .to({}, { duration: 0.20 }); /* hold the completed frame */
+    .to('.tick-2 .tick-line',  { scaleY: 1, duration: 0.05 }, 0.34)
+    .to('.tick-2 .tick-label', { autoAlpha: 1, duration: 0.04 }, 0.36)
+    /* beat 3 — the qualifying form; both bubbles recede further */
+    .to('.form-card',  { autoAlpha: 1, duration: 0.05 }, 0.40)
+    .to('.form-card',  { y: 0, z: 0, duration: 0.18 }, 0.40)
+    .to('#anchor',     { z: -130, duration: 0.18 }, 0.40)
+    .to('.auto-reply', { z: -70, duration: 0.18 }, 0.40)
+    /* beat 4 — CAPTURED stamps down onto the page from the camera side */
+    .to('.capture-stamp', { autoAlpha: 1, duration: 0.04 }, 0.64)
+    .to('.capture-stamp', { z: 0, duration: 0.12 }, 0.64)
+    .to({}, { duration: 0.24 }); /* hold the completed frame */
 
   /* Rail + crop marks appear with Act 1 (snap, no fade) */
   ScrollTrigger.create({
@@ -124,4 +138,14 @@ mm.add('(prefers-reduced-motion: reduce)', () => {
    change layout heights). */
 if (document.fonts && document.fonts.ready) {
   document.fonts.ready.then(() => ScrollTrigger.refresh());
+}
+
+/* DEV ONLY — remove before production deploy: ?scrub=0.4 jumps to that
+   progress within Act 1's pin so frames can be reviewed in isolation. */
+const scrubParam = new URLSearchParams(location.search).get('scrub');
+if (scrubParam !== null) {
+  window.addEventListener('load', () => setTimeout(() => {
+    const st = ScrollTrigger.getById('act1');
+    if (st) window.scrollTo(0, st.start + parseFloat(scrubParam) * (st.end - st.start));
+  }, 300));
 }

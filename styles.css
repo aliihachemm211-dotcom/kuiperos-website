@@ -216,7 +216,8 @@ body.rail-on .cropmarks { visibility: visible; }
   padding-top: var(--header-h);
   position: relative;
   overflow: hidden;
-  perspective: 1100px;
+  perspective: 1000px;
+  perspective-origin: 50% 42%;
 }
 
 .scene {
@@ -335,7 +336,8 @@ body.rail-on .cropmarks { visibility: visible; }
 /* --- Capture stamp --- */
 
 .capture-stamp {
-  display: inline-block;
+  display: block; /* inline-block defeats 3D perspective projection — must stay block-level */
+  width: max-content;
   margin: clamp(20px, 4vh, 44px) 0 0 60px;
   padding: 15px 26px;
   border: 1.5px solid var(--accent);
