@@ -98,10 +98,16 @@ function setRail(act, index) {
 function slotPos(i) {
   const slot = document.querySelector(ACTS[i].slot);
   const scene = slot.closest('.scene');
-  return {
-    x: scene.offsetLeft + slot.offsetLeft,
-    y: scene.offsetTop + slot.offsetTop
-  };
+  /* Walk the offsetParent chain: transformed ancestors (e.g. GSAP-animated
+     kanban columns) become offsetParents, so a single offsetLeft read is
+     not necessarily scene-relative. */
+  let x = 0, y = 0, el = slot;
+  while (el && el !== scene) {
+    x += el.offsetLeft;
+    y += el.offsetTop;
+    el = el.offsetParent;
+  }
+  return { x: scene.offsetLeft + x, y: scene.offsetTop + y };
 }
 
 function sizeSlots() {
