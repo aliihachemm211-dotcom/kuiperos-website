@@ -28,7 +28,37 @@ const ACTS = [
     name: 'act2', dist: 1.75, scene: '.scene-2', slot: '#slot-2', slotScale: 0.45,
     ref: 'MATCH—0417', step: '02 / 05',
     caption: ['Eighty-four listings. Only three match this inquiry.', 'The matching engine does the rest.'],
-    build: buildAct2Opening
+    build: buildAct2
+  },
+  {
+    name: 'act3', dist: 1.5, scene: '.scene-3', slot: '#slot-3', slotScale: 0.45,
+    ref: 'HANDOFF—0417', step: '03 / 05',
+    caption: ['The agent is assigned with a click, and pinged instantly.'],
+    build: buildAct3
+  },
+  {
+    name: 'act4', dist: 0.75, scene: '.scene-4', slot: '#slot-4', slotScale: 0.45,
+    ref: 'VIEWING—0417', step: '04 / 05',
+    caption: ['The lead picks from the available slots.', 'The agent confirms with a click.'],
+    build: buildAct4
+  },
+  {
+    name: 'act5', dist: 1.5, scene: '.scene-5', slot: '#slot-5', slotScale: 1, dark: true,
+    ref: 'OPS—0417', step: '05 / 05',
+    caption: ['This is one thread.', 'Forty-two others are running the same way, right now.'],
+    build: buildAct5,
+    /* The anchor bubble BECOMES the highlighted lead card: size, radius and
+       color morph while its faces crossfade (message out, RANIA K. in). */
+    handoff(tl, at, dur) {
+      tl.to(anchor, {
+        width: 166, height: 86, borderRadius: 10,
+        backgroundColor: '#2C5EFF',
+        boxShadow: '0 0 0 1.5px #7E9BFF',
+        duration: dur
+      }, at)
+        .to('.anchor-msg', { autoAlpha: 0, duration: dur * 0.40 }, at)
+        .to('.anchor-face', { autoAlpha: 1, duration: dur * 0.50 }, at + dur * 0.40);
+    }
   }
 ];
 
@@ -141,9 +171,19 @@ mm.add('(prefers-reduced-motion: no-preference)', () => {
   /* Base hidden states — every later tween that reveals an element uses
      immediateRender:false, so the element must start hidden here or it
      would sit visible before the playhead first reaches its tween. */
-  gsap.set([anchor, '.auto-reply', '.form-card', '.capture-stamp',
-            '.tick-label', '.grid-label', '.match-grid .cell'], { autoAlpha: 0 });
+  gsap.set([anchor, '.auto-reply', '.form-card', '.capture-stamp', '.tick-label',
+            '.scene-2 .grid-label', '.match-grid .cell', '.listing-card',
+            '.node', '.connector-label', '.notify-card',
+            '.scene-4 .grid-label', '.slot-card', '.booking-card',
+            '.kcol', '.kcol .kcard', '.ledger'], { autoAlpha: 0 });
   gsap.set('.tick-line', { scaleY: 0, transformOrigin: 'top center' });
+  gsap.set('.connector-line', { scaleX: 0, rotation: 6, transformOrigin: 'left center' });
+  /* Match cells start dim like the rest; their accent state is the Act 2 moment */
+  gsap.set('.match-grid .cell.match', {
+    backgroundColor: '#EFEDE9',
+    borderColor: 'rgba(44, 94, 255, 0)',
+    boxShadow: '0 0 0px rgba(44, 94, 255, 0)'
+  });
 
   /* Compute segment starts and total length first */
   const starts = [];
@@ -168,13 +208,16 @@ mm.add('(prefers-reduced-motion: no-preference)', () => {
       onEnterBack: railOn,
       onLeaveBack: railOff,
       onUpdate: (self) => {
-        /* Rail snaps at the midpoint of each transition */
+        /* Rail (and the act-5 chrome inversion) snap at transition midpoints */
         const u = self.progress * total;
         let idx = 0;
         for (let i = 1; i < ACTS.length; i++) {
           if (u >= starts[i] - TRANS / 2) idx = i;
         }
-        if (railEl.ref.textContent !== ACTS[idx].ref) setRail(ACTS[idx], idx);
+        if (railEl.ref.textContent !== ACTS[idx].ref) {
+          setRail(ACTS[idx], idx);
+          document.body.classList.toggle('inverted', !!ACTS[idx].dark);
+        }
       }
     }
   });
@@ -206,6 +249,7 @@ mm.add('(prefers-reduced-motion: no-preference)', () => {
       let idx = 0;
       for (let i = 1; i < ACTS.length; i++) if (u >= starts[i] - TRANS / 2) idx = i;
       setRail(ACTS[idx], idx);
+      document.body.classList.toggle('inverted', !!ACTS[idx].dark);
       window.scrollTo(0, 0);
     };
     /* Apply once, after fonts have settled layout (headless included) */
@@ -225,20 +269,28 @@ mm.add('(prefers-reduced-motion: no-preference)', () => {
        so it stays on screen, mid-motion, travelling to its next slot. --- */
 function addTransition(tl, i, at) {
   const next = i + 1;
+  const nx = ACTS[next];
   tl.to(camera, { z: next * STEP, duration: TRANS }, at)
     /* outgoing holds until past mid-transition, gone before the camera-plane
        crossover inverts its projection (z +825 of +1000 at fade end) */
     .to(ACTS[i].scene, { autoAlpha: 0, duration: TRANS * 0.30 }, at + TRANS * 0.25)
     /* incoming has real presence by mid-transition */
-    .fromTo(ACTS[next].scene, { autoAlpha: 0 },
+    .fromTo(nx.scene, { autoAlpha: 0 },
       { autoAlpha: 1, duration: TRANS * 0.40, immediateRender: false }, at + TRANS * 0.10)
     .to(anchor, {
       x: () => slotPos(next).x,
       y: () => slotPos(next).y,
       z: -next * STEP,
-      scale: ACTS[next].slotScale,
+      scale: nx.slotScale,
       duration: TRANS
     }, at);
+  /* One of the two sanctioned background-color crossfades: Act 4 -> 5 */
+  if (nx.dark) {
+    tl.to('body', { backgroundColor: '#1A1917', duration: TRANS }, at)
+      .to('.site-header', { backgroundColor: '#1A1917', borderBottomColor: '#3C3A37', duration: TRANS }, at)
+      .to('.wordmark', { color: '#FAF9F7', duration: TRANS }, at);
+  }
+  if (nx.handoff) nx.handoff(tl, at, TRANS);
 }
 
 /* --- Act 1 — Contact (dist 1.0, fast) --- */
@@ -274,16 +326,79 @@ function buildAct1(tl, at) {
   /* remaining ~0.24 of the segment holds the completed frame */
 }
 
-/* --- Act 2 — Matching, opening state only for now (dist 1.75, lingered).
-       Full act (match highlight moment, listing card) comes next.
-       The opening beats START inside the preceding transition (negative
-       offsets) so the scene arrives already composing — the camera moves
-       into the act's opening state, not into an empty box. --- */
-function buildAct2Opening(tl, at) {
-  tl.fromTo('.grid-label', { autoAlpha: 0, y: 26 },
+/* --- Act 2 — Matching (dist 1.75, the lingered signature moment).
+       Opening beats START inside the preceding transition (negative offsets)
+       so the scene arrives already composing. Then: the three matches light
+       up one by one (popping toward the camera), and the ACHRAFIEH-014
+       listing card rises from depth. --- */
+function buildAct2(tl, at) {
+  tl.fromTo('.scene-2 .grid-label', { autoAlpha: 0, y: 26 },
     { autoAlpha: 1, y: 0, duration: 0.10, immediateRender: false }, at - TRANS * 0.70)
     .fromTo('.match-grid .cell', { autoAlpha: 0, y: 30, z: -140 },
-      { autoAlpha: 1, y: 0, z: 0, duration: 0.16, stagger: { each: 0.02 }, immediateRender: false }, at - TRANS * 0.50);
+      { autoAlpha: 1, y: 0, z: 0, duration: 0.16, stagger: { each: 0.02 }, immediateRender: false }, at - TRANS * 0.50)
+    /* the signature moment: three matches resolve, one by one */
+    .to('.match-grid .cell.match', {
+      backgroundColor: '#FFFFFF',
+      borderColor: '#2C5EFF',
+      boxShadow: '0 0 18px rgba(44, 94, 255, 0.22)',
+      z: 70,
+      duration: 0.11,
+      stagger: 0.12
+    }, at + 0.65)
+    .to('.match-grid .cell.match', { z: 0, duration: 0.09, stagger: 0.12 }, at + 0.76)
+    /* the matched listing rises */
+    .fromTo('.listing-card', { autoAlpha: 0 },
+      { autoAlpha: 1, duration: 0.05, immediateRender: false }, at + 0.98)
+    .fromTo('.listing-card', { y: 130, z: -780 },
+      { y: 0, z: 0, duration: 0.24 }, at + 0.98);
+}
+
+/* --- Act 3 — Assignment (dist 1.5, weighted) --- */
+function buildAct3(tl, at) {
+  tl.fromTo('.node-admin', { autoAlpha: 0 },
+    { autoAlpha: 1, duration: 0.05, immediateRender: false }, at - TRANS * 0.60)
+    .fromTo('.node-admin', { y: 90, z: -700 },
+      { y: 0, z: 0, duration: 0.16 }, at - TRANS * 0.60)
+    .fromTo('.node-karim', { autoAlpha: 0 },
+      { autoAlpha: 1, duration: 0.05, immediateRender: false }, at - TRANS * 0.40)
+    .fromTo('.node-karim', { y: 90, z: -700 },
+      { y: 0, z: 0, duration: 0.16 }, at - TRANS * 0.40)
+    /* the handoff line draws left-to-right along its (static) 6-degree tilt */
+    .fromTo('.connector-line', { scaleX: 0, rotation: 6 },
+      { scaleX: 1, rotation: 6, duration: 0.16, immediateRender: false }, at + 0.10)
+    .fromTo('.connector-label', { autoAlpha: 0 },
+      { autoAlpha: 1, duration: 0.06, immediateRender: false }, at + 0.24)
+    .fromTo('.notify-card', { autoAlpha: 0 },
+      { autoAlpha: 1, duration: 0.05, immediateRender: false }, at + 0.36)
+    .fromTo('.notify-card', { y: 110, z: -700 },
+      { y: 0, z: 0, duration: 0.20 }, at + 0.36);
+}
+
+/* --- Act 4 — Booking (dist 0.75, fast) --- */
+function buildAct4(tl, at) {
+  tl.fromTo('.scene-4 .grid-label', { autoAlpha: 0, y: 26 },
+    { autoAlpha: 1, y: 0, duration: 0.08, immediateRender: false }, at - TRANS * 0.60)
+    .fromTo('.slot-card', { autoAlpha: 0, y: 40, z: -320 },
+      { autoAlpha: 1, y: 0, z: 0, duration: 0.10, stagger: 0.03, immediateRender: false }, at - TRANS * 0.45)
+    /* the lead picks Fri 11:30 */
+    .to('.slot-picked', { backgroundColor: '#2C5EFF', color: '#FAF9F7', duration: 0.07 }, at + 0.10)
+    .fromTo('.booking-card', { autoAlpha: 0 },
+      { autoAlpha: 1, duration: 0.04, immediateRender: false }, at + 0.24)
+    .fromTo('.booking-card', { y: 110, z: -650 },
+      { y: 0, z: 0, duration: 0.16 }, at + 0.24);
+}
+
+/* --- Act 5 — Operation / Control Room (dist 1.5, slow finish) --- */
+function buildAct5(tl, at) {
+  tl.fromTo('.kcol', { autoAlpha: 0, y: 60, z: -500 },
+    { autoAlpha: 1, y: 0, z: 0, duration: 0.14, stagger: 0.035, immediateRender: false }, at - TRANS * 0.55)
+    .fromTo('.kcol .kcard', { autoAlpha: 0, y: 24 },
+      { autoAlpha: 1, y: 0, duration: 0.10, stagger: 0.03, immediateRender: false }, at + 0.06)
+    .fromTo('.ledger', { autoAlpha: 0 },
+      { autoAlpha: 1, duration: 0.05, immediateRender: false }, at + 0.34)
+    .fromTo('.ledger', { y: 90, z: -450 },
+      { y: 0, z: 0, duration: 0.18 }, at + 0.34);
+  /* the remainder of the segment is the deliberate slow hold before the CTA */
 }
 
 /* ===========================================================================
