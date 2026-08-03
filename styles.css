@@ -213,18 +213,41 @@ body.rail-on .cropmarks { visibility: visible; }
 
 .act-stage {
   height: 100vh;
-  padding-top: var(--header-h);
   position: relative;
   overflow: hidden;
   perspective: 1000px;
   perspective-origin: 50% 42%;
 }
 
+/* The camera: one 3D space shared by all acts; its translateZ is the dolly */
+.camera {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+
 .scene {
+  position: absolute;
+  top: var(--header-h);
+  left: calc(50% - 312px); /* matches reference: anchor bubble left edge ~483px at 1600w */
   width: 720px;
-  margin-left: calc(50% - 312px); /* matches reference: anchor bubble left edge ~483px at 1600w */
   padding-top: clamp(40px, 7.5vh, 104px);
   transform-style: preserve-3d;
+}
+
+/* The anchor travels between acts at camera level */
+#anchor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 5;
+  transform-origin: top left;
+}
+
+.anchor-slot {
+  width: 515px;
+  height: 125px; /* re-measured from the real anchor by JS on refresh */
+  pointer-events: none;
 }
 
 /* --- Message bubbles (the anchor + the auto-reply) --- */
@@ -333,6 +356,43 @@ body.rail-on .cropmarks { visibility: visible; }
   cursor: default;
 }
 
+/* --- Act 2 opening: matching grid --- */
+
+.scene-2 .anchor-slot {
+  position: absolute;
+  top: clamp(30px, 5vh, 80px);
+  left: 560px;
+  width: 232px;  /* anchor lands here at 0.45 scale (515 x 0.45) */
+  height: 56px;
+}
+
+.grid-label {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  color: var(--mute);
+}
+
+.match-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 16px;
+  margin-top: 20px;
+  width: 720px;
+}
+
+.match-grid .cell {
+  aspect-ratio: 1;
+  background: #EFEDE9;
+  border-radius: 8px;
+}
+
+.match-grid .cell.match {
+  background: var(--card);
+  border: 1.5px solid var(--accent);
+  box-shadow: 0 0 18px rgba(44, 94, 255, 0.22);
+}
+
 /* --- Capture stamp --- */
 
 .capture-stamp {
@@ -353,18 +413,19 @@ body.rail-on .cropmarks { visibility: visible; }
    Short-viewport safeguard — keep the whole Act 1 composition on screen
 --------------------------------------------------------------------------- */
 
+/* Scale the whole stage (scenes + anchor together) so compositions fit short
+   viewports; GSAP owns the scenes' inline transforms, so scaling must live on
+   an untouched ancestor inside the pinned element. */
 @media (max-height: 900px) {
-  .scene-1 {
-    transform: scale(0.86);
-    transform-origin: top center;
-    padding-top: 30px;
+  .act-stage {
+    transform: scale(0.88);
+    transform-origin: 50% 12%;
   }
 }
 @media (max-height: 760px) {
-  .scene-1 {
-    transform: scale(0.72);
-    transform-origin: top center;
-    padding-top: 20px;
+  .act-stage {
+    transform: scale(0.74);
+    transform-origin: 50% 10%;
   }
 }
 
@@ -376,7 +437,7 @@ body.rail-on .cropmarks { visibility: visible; }
   :root { --page-margin: 40px; }
   .rail { width: 200px; }
   .rail-caption p { font-size: 13px; }
-  .scene { margin-left: 300px; }
+  .scene { left: 300px; }
 }
 
 /* ---------------------------------------------------------------------------
@@ -419,15 +480,18 @@ body.rail-on .cropmarks { visibility: visible; }
   .opener-tension-2 { font-size: 15px; }
   .opener-pivot { margin-top: 44px; font-size: 17px; }
 
-  .act-stage { padding-top: calc(var(--header-h) + 74px); }
-
   .scene {
+    left: 0;
     width: 100%;
-    margin: 0;
+    top: calc(var(--header-h) + 74px);
     padding: 0 var(--page-margin);
   }
 
+  .scene-2 .anchor-slot { left: auto; right: var(--page-margin); width: 180px; }
+  .match-grid { width: 100%; gap: 8px; }
+
   .bubble { width: min(88%, 400px); padding: 16px 18px 13px; border-radius: 13px; }
+  .anchor-slot { width: min(88%, 400px); }
   .bubble p { font-size: 15px; }
   .bubble-meta { font-size: 10px; margin-top: 8px; }
 
@@ -443,8 +507,6 @@ body.rail-on .cropmarks { visibility: visible; }
   .btn-submit { height: 44px; font-size: 14px; margin-top: 10px; }
 
   .capture-stamp { margin: 18px 0 0 0; padding: 11px 18px; font-size: 11px; }
-
-  .scene-1 { transform: none; }
 }
 
 /* ---------------------------------------------------------------------------
@@ -456,4 +518,16 @@ body.reduced .act-stage {
   height: auto;
   min-height: 100vh;
   padding-bottom: 80px;
+  perspective: none;
+  transform: none;
 }
+body.reduced .camera { position: static; }
+body.reduced .scene {
+  position: relative;
+  top: auto;
+  padding-top: calc(var(--header-h) + 60px);
+  padding-bottom: 60px;
+}
+/* In reduced mode JS re-parents the anchor into slot-1 */
+body.reduced #anchor { position: static; }
+body.reduced .anchor-slot { height: auto !important; }

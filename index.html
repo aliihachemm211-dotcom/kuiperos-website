@@ -50,15 +50,20 @@
       </div>
     </section>
 
-    <!-- Act 1 — Contact -->
-    <section class="act" id="act-1" data-act="1">
+    <!-- The 5-act sequence: one pinned stage, one camera, acts at z-stations.
+         The anchor bubble lives at camera level so it can travel between acts. -->
+    <section class="sequence" id="sequence">
       <div class="act-stage">
-        <div class="scene scene-1">
+        <div class="camera">
 
           <div class="bubble anchor" id="anchor">
             <p>I am looking for a 2 bedroom in Achrafieh, anything available?</p>
             <span class="bubble-meta">10:41:00</span>
           </div>
+
+        <div class="scene scene-1" data-act="1">
+
+          <div class="anchor-slot" id="slot-1" aria-hidden="true"></div>
 
           <div class="tick tick-1">
             <span class="tick-line"></span>
@@ -89,6 +94,19 @@
           </div>
 
           <div class="capture-stamp">CAPTURED&ensp;·&ensp;CRM-0417</div>
+
+        </div>
+
+        <div class="scene scene-2" data-act="2">
+          <div class="anchor-slot" id="slot-2" aria-hidden="true"></div>
+          <div class="grid-label">MATCHING AGAINST ACTIVE LISTINGS</div>
+          <div class="match-grid">
+            <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+            <div class="cell"></div><div class="cell"></div><div class="cell match"></div><div class="cell match"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+            <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell match"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+            <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+          </div>
+        </div>
 
         </div>
       </div>
