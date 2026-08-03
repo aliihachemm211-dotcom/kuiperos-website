@@ -82,6 +82,21 @@ function sizeSlots() {
   }
 }
 
+/* Continuously scale the stage so the tallest scene fits the viewport with
+   breathing room — stepped media queries left clipping windows on mid-height
+   screens (e.g. 1080p laptops). Uses layout offsets, so it is independent of
+   whatever transforms the scrub currently has applied. */
+function fitStage() {
+  const stage = document.querySelector('.act-stage');
+  if (!stage || document.body.classList.contains('reduced')) return;
+  let maxBottom = 0;
+  document.querySelectorAll('.scene').forEach(sc => {
+    maxBottom = Math.max(maxBottom, sc.offsetTop + sc.offsetHeight);
+  });
+  const s = Math.min(1, (window.innerHeight - 24) / maxBottom);
+  stage.style.transform = s < 1 ? 'scale(' + s.toFixed(4) + ')' : 'none';
+}
+
 const mm = gsap.matchMedia();
 
 /* ===========================================================================
@@ -89,8 +104,9 @@ const mm = gsap.matchMedia();
 =========================================================================== */
 mm.add('(prefers-reduced-motion: no-preference)', () => {
 
-  sizeSlots();
-  ScrollTrigger.addEventListener('refreshInit', sizeSlots);
+  const onRefreshInit = () => { sizeSlots(); fitStage(); };
+  onRefreshInit();
+  ScrollTrigger.addEventListener('refreshInit', onRefreshInit);
 
   /* --- Opener: three beats revealed by scroll, pinned --- */
   gsap.set(['.opener-tension-1', '.opener-tension-2', '.opener-pivot'], {
@@ -175,7 +191,32 @@ mm.add('(prefers-reduced-motion: no-preference)', () => {
 
   setRail(ACTS[0], 0);
 
-  return () => ScrollTrigger.removeEventListener('refreshInit', sizeSlots);
+  /* DEV ONLY — remove before production deploy: ?frame=0.4 freezes the master
+     timeline at that progress with pinning disabled and the opener hidden, so
+     any moment can be screenshotted headlessly (no scrolling involved). */
+  const frameParam = new URLSearchParams(location.search).get('frame');
+  if (frameParam !== null) {
+    const p = parseFloat(frameParam);
+    const applyFrame = () => {
+      document.body.classList.add('framemode', 'rail-on');
+      ScrollTrigger.getAll().forEach(t => t.disable(true));
+      fitStage();
+      tl.pause().progress(0).progress(p); /* progress(0) forces a re-render */
+      const u = p * total;
+      let idx = 0;
+      for (let i = 1; i < ACTS.length; i++) if (u >= starts[i] - TRANS / 2) idx = i;
+      setRail(ACTS[idx], idx);
+      window.scrollTo(0, 0);
+    };
+    /* Apply once, after fonts have settled layout (headless included) */
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(applyFrame);
+    } else {
+      window.addEventListener('load', applyFrame);
+    }
+  }
+
+  return () => ScrollTrigger.removeEventListener('refreshInit', onRefreshInit);
 });
 
 /* --- Generic act-to-act transition: camera dollies one station forward;
@@ -185,9 +226,12 @@ mm.add('(prefers-reduced-motion: no-preference)', () => {
 function addTransition(tl, i, at) {
   const next = i + 1;
   tl.to(camera, { z: next * STEP, duration: TRANS }, at)
-    .to(ACTS[i].scene, { autoAlpha: 0, duration: TRANS * 0.30 }, at + TRANS * 0.15)
+    /* outgoing holds until past mid-transition, gone before the camera-plane
+       crossover inverts its projection (z +825 of +1000 at fade end) */
+    .to(ACTS[i].scene, { autoAlpha: 0, duration: TRANS * 0.30 }, at + TRANS * 0.25)
+    /* incoming has real presence by mid-transition */
     .fromTo(ACTS[next].scene, { autoAlpha: 0 },
-      { autoAlpha: 1, duration: TRANS * 0.45, immediateRender: false }, at + TRANS * 0.25)
+      { autoAlpha: 1, duration: TRANS * 0.40, immediateRender: false }, at + TRANS * 0.10)
     .to(anchor, {
       x: () => slotPos(next).x,
       y: () => slotPos(next).y,
@@ -231,12 +275,15 @@ function buildAct1(tl, at) {
 }
 
 /* --- Act 2 — Matching, opening state only for now (dist 1.75, lingered).
-       Full act (match highlight moment, listing card) comes next. --- */
+       Full act (match highlight moment, listing card) comes next.
+       The opening beats START inside the preceding transition (negative
+       offsets) so the scene arrives already composing — the camera moves
+       into the act's opening state, not into an empty box. --- */
 function buildAct2Opening(tl, at) {
   tl.fromTo('.grid-label', { autoAlpha: 0, y: 26 },
-    { autoAlpha: 1, y: 0, duration: 0.10, immediateRender: false }, at + 0.02)
+    { autoAlpha: 1, y: 0, duration: 0.10, immediateRender: false }, at - TRANS * 0.70)
     .fromTo('.match-grid .cell', { autoAlpha: 0, y: 30, z: -140 },
-      { autoAlpha: 1, y: 0, z: 0, duration: 0.16, stagger: { each: 0.02 }, immediateRender: false }, at + 0.08);
+      { autoAlpha: 1, y: 0, z: 0, duration: 0.16, stagger: { each: 0.02 }, immediateRender: false }, at - TRANS * 0.50);
 }
 
 /* ===========================================================================

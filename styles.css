@@ -211,10 +211,18 @@ body.rail-on .cropmarks { visibility: visible; }
    Act stage — pinned, full viewport, with real z-depth
 --------------------------------------------------------------------------- */
 
-.act-stage {
+/* The clip lives on the UN-transformed section: overflow on .act-stage
+   itself would clip content before the fit-scale transform is applied,
+   invisibly cutting off anything past the viewport box (found the hard way). */
+.sequence {
   height: 100vh;
   position: relative;
   overflow: hidden;
+}
+
+.act-stage {
+  height: 100vh;
+  position: relative;
   perspective: 1000px;
   perspective-origin: 50% 42%;
 }
@@ -360,9 +368,9 @@ body.rail-on .cropmarks { visibility: visible; }
 
 .scene-2 .anchor-slot {
   position: absolute;
-  top: clamp(30px, 5vh, 80px);
-  left: 560px;
-  width: 232px;  /* anchor lands here at 0.45 scale (515 x 0.45) */
+  top: 130px;   /* aligned with the grid's first row */
+  left: 764px;  /* clear to the right of the 720px grid, away from all text */
+  width: 232px; /* anchor lands here at 0.45 scale (515 x 0.45) */
   height: 56px;
 }
 
@@ -413,21 +421,11 @@ body.rail-on .cropmarks { visibility: visible; }
    Short-viewport safeguard — keep the whole Act 1 composition on screen
 --------------------------------------------------------------------------- */
 
-/* Scale the whole stage (scenes + anchor together) so compositions fit short
-   viewports; GSAP owns the scenes' inline transforms, so scaling must live on
-   an untouched ancestor inside the pinned element. */
-@media (max-height: 900px) {
-  .act-stage {
-    transform: scale(0.88);
-    transform-origin: 50% 12%;
-  }
-}
-@media (max-height: 760px) {
-  .act-stage {
-    transform: scale(0.74);
-    transform-origin: 50% 10%;
-  }
-}
+/* Short-viewport fit: JS (fitStage) continuously scales .act-stage so the
+   tallest scene always fits the viewport — a stepped media query left a
+   clipping window on mid-height screens. GSAP owns the scenes' inline
+   transforms, so the scale must live on this untouched ancestor. */
+.act-stage { transform-origin: 50% 0; }
 
 /* ---------------------------------------------------------------------------
    Tablet (768–1024px): desktop behavior, tightened margins
@@ -487,7 +485,8 @@ body.rail-on .cropmarks { visibility: visible; }
     padding: 0 var(--page-margin);
   }
 
-  .scene-2 .anchor-slot { left: auto; right: var(--page-margin); width: 180px; }
+  /* Mobile grid is full-width, so the anchor parks below it instead */
+  .scene-2 .anchor-slot { left: 0; top: 320px; width: 180px; }
   .match-grid { width: 100%; gap: 8px; }
 
   .bubble { width: min(88%, 400px); padding: 16px 18px 13px; border-radius: 13px; }
@@ -508,6 +507,10 @@ body.rail-on .cropmarks { visibility: visible; }
 
   .capture-stamp { margin: 18px 0 0 0; padding: 11px 18px; font-size: 11px; }
 }
+
+/* DEV ONLY: ?frame= screenshot mode — opener hidden so the stage sits at top */
+body.framemode .opener { display: none; }
+body.framemode { overflow: hidden; }
 
 /* ---------------------------------------------------------------------------
    Reduced motion — complete static experience, everything visible
