@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>kuiperOS — The Operating System for Modern Real Estate</title>
+  <meta name="description" content="kuiperOS qualifies, matches, and hands off every inquiry through WhatsApp — so no lead waits, and no agent has to open a dashboard.">
+  <meta property="og:title" content="kuiperOS — The Operating System for Modern Real Estate">
+  <meta property="og:description" content="kuiper does everything up to the decision. The decision stays yours.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20fill='%23FAF9F7'/%3E%3Ctext%20x='32'%20y='46'%20font-family='Clash%20Display,Georgia,serif'%20font-size='44'%20font-weight='600'%20fill='%231A1917'%20text-anchor='middle'%3Ek%3C/text%3E%3C/svg%3E">
+  <link rel="preload" href="Fonts/ClashDisplay-Semibold.otf" as="font" type="font/otf" crossorigin>
+  <link rel="preload" href="Fonts/GeneralSans-Regular.otf" as="font" type="font/otf" crossorigin>
+  <link rel="preload" href="Fonts/GeneralSans-Bold.otf" as="font" type="font/otf" crossorigin>
+  <link rel="preload" href="Fonts/DMMono-Regular.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <header class="site-header" id="site-header">
+    <span class="wordmark">kuiper.</span>
+    <button class="btn-cta" type="button">Request early access</button>
+  </header>
+
+  <!-- Fixed overlays: side rail + crop marks (shown during the act sequence) -->
+  <aside class="rail" id="rail" aria-hidden="true">
+    <div class="rail-ref" id="rail-ref">THREAD—0417</div>
+    <div class="rail-step" id="rail-step">01 / 05</div>
+    <div class="rail-caption" id="rail-caption">
+      <p>A message arrives at&nbsp;10:41am.</p>
+      <p>In thirty seconds, the lead is qualified — not just logged.</p>
+    </div>
+  </aside>
+
+  <div class="cropmarks" id="cropmarks" aria-hidden="true">
+    <span class="mark mark-tl"></span>
+    <span class="mark mark-tr"></span>
+    <span class="mark mark-bl"></span>
+    <span class="mark mark-br"></span>
+  </div>
+
+  <main>
+
+    <!-- Opener: three-beat progression, text only -->
+    <section class="opener" id="opener">
+      <div class="opener-inner">
+        <h1 class="opener-headline">The Operating System for&nbsp;Modern Real Estate</h1>
+        <p class="opener-tension-1">Every minute of silence is a lead deciding on someone else.</p>
+        <p class="opener-tension-2">Hours pass. Leads go cold. Somewhere in the chaos, you’re losing deals you never even saw.</p>
+        <p class="opener-pivot">Here’s the same lead. Handled differently.</p>
+      </div>
+    </section>
+
+    <!-- Act 1 — Contact -->
+    <section class="act" id="act-1" data-act="1">
+      <div class="act-stage">
+        <div class="scene scene-1">
+
+          <div class="bubble anchor" id="anchor">
+            <p>I am looking for a 2 bedroom in Achrafieh, anything available?</p>
+            <span class="bubble-meta">10:41:00</span>
+          </div>
+
+          <div class="tick tick-1">
+            <span class="tick-line"></span>
+            <span class="tick-label">+00:03s</span>
+          </div>
+
+          <div class="bubble auto-reply">
+            <p>Thanks for reaching out! To find you the best match, please fill the form below — it’ll take a couple of seconds.</p>
+            <span class="bubble-meta">10:41:03&ensp;·&ensp;<em>AUTO</em></span>
+          </div>
+
+          <div class="tick tick-2">
+            <span class="tick-line"></span>
+            <span class="tick-label">+00:30s</span>
+          </div>
+
+          <div class="form-card">
+            <div class="form-title">QUALIFYING FORM — 04</div>
+            <div class="form-rows">
+              <div class="form-row">Name — Rania K.</div>
+              <div class="form-row">Mobile Number — +961 3 xxx xxx</div>
+              <div class="form-row">Area — Achrafieh, Beirut</div>
+              <div class="form-row">Bedrooms — 2</div>
+              <div class="form-row">Budget — $180,000</div>
+              <div class="form-row">Timeline — Ready now</div>
+            </div>
+            <button class="btn-submit" type="button" tabindex="-1">Submit</button>
+          </div>
+
+          <div class="capture-stamp">CAPTURED&ensp;·&ensp;CRM-0417</div>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
