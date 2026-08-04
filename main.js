@@ -13,6 +13,44 @@
 gsap.registerPlugin(ScrollTrigger);
 ScrollTrigger.config({ ignoreMobileResize: true });
 
+/* ---------------------------------------------------------------------------
+   Lenis smooth scroll, wired to ScrollTrigger the way GSAP documents it.
+
+   Lenis drives the real window scroll position, so ScrollTrigger needs no
+   scrollerProxy — only (a) an update on every Lenis scroll event and (b) a
+   single shared RAF loop, which GSAP's ticker owns. lagSmoothing(0) stops
+   GSAP from swallowing a frame delta after a stall, which would otherwise
+   desync the two.
+
+   Skipped entirely for prefers-reduced-motion (smooth scroll is motion the
+   visitor asked not to have) and for the ?frame= capture mode, which sets
+   scroll position directly.
+--------------------------------------------------------------------------- */
+let lenis = null;
+
+function initLenis() {
+  if (typeof Lenis === 'undefined') return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (new URLSearchParams(location.search).has('frame')) return;
+
+  lenis = new Lenis({
+    duration: 1.05,     /* how long the scroll takes to settle */
+    smoothWheel: true,
+    syncTouch: false,   /* touch keeps native momentum — better on phones */
+    autoRaf: false      /* GSAP's ticker is the only RAF loop */
+  });
+
+  lenis.on('scroll', ScrollTrigger.update);
+  gsap.ticker.add((time) => lenis.raf(time * 1000));
+  gsap.ticker.lagSmoothing(0);
+
+  /* exposed so tooling (and any later in-page anchor navigation) can drive
+     scroll through Lenis rather than fighting it with window.scrollTo */
+  window.__lenis = lenis;
+}
+
+initLenis();
+
 const PERSP = 1400;
 const stage = document.querySelector('.act-stage');
 const camera = document.querySelector('.camera');
