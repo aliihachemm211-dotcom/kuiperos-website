@@ -262,7 +262,7 @@ mm.add('(prefers-reduced-motion: no-preference)', () => {
       onUpdate: (self) => {
         const u = self.progress * total;
         let idx = 0;
-        for (let i = 0; i < SEG.length; i++) if (u >= AT[i] - 0.08) idx = SEG[i].r;
+        for (let i = 0; i < SEG.length; i++) if (u >= AT[i]) idx = SEG[i].r;
         setRail(idx);
       }
     }
@@ -465,7 +465,112 @@ mm.add('(prefers-reduced-motion: no-preference)', () => {
         { autoAlpha: 1, y: 0, z: 0, duration: .22, immediateRender: false }, b + .82);
   })();
 
-  /* Placeholder hold for acts not yet rebuilt — filled in next passes. */
+  /* =====================================================================
+     ACT 4 — Booking.  The calendar is sent to her in the thread, she
+     picks a slot there, and only then do we cut to the agent.
+  ===================================================================== */
+  (function act4() {
+    comeBack('.scene-assign', AT[8], SEG[8].len);
+
+    const a = AT[9];
+    push('.m-a4-cal', a + .02, .24, 34);
+
+    /* she presses Fri 11:30 — the slot takes the press, then commits */
+    tl.to('#cal-fri', { scale: .93, duration: .04 }, a + .36)
+      .to('#cal-fri', { scale: 1, duration: .08 }, a + .40)
+      .to('#cal-fri', {
+        backgroundColor: '#2C5EFF', borderColor: '#2C5EFF', color: '#FAF9F7',
+        boxShadow: '0 2px 6px rgba(44,94,255,.14), 0 14px 30px -8px rgba(44,94,255,.4)',
+        duration: .09
+      }, a + .38)
+      /* the options she didn't take step back out of contention */
+      .to('.cal-slot:not(.cal-picked)', {
+        opacity: .3, scale: .97, duration: .13, stagger: .016
+      }, a + .46);
+
+    /* over to the agent's side */
+    leave('.scene-agent', AT[10], SEG[10].len);
+
+    const b = AT[11];
+    tl.fromTo('.scene-agent .agent-mini', { autoAlpha: 0, y: -26 },
+      { autoAlpha: 1, y: 0, duration: .10, immediateRender: false }, b + .02)
+      .fromTo('.booking-card', { autoAlpha: 0, y: 100, z: -640 },
+        { autoAlpha: 1, y: 0, z: 0, duration: .26, immediateRender: false }, b + .05)
+      /* he confirms with a click */
+      .to('#btn-confirm', { scale: .95, duration: .035 }, b + .38)
+      .to('#btn-confirm', { scale: 1, duration: .055 }, b + .415)
+      .to('.booking-actions .btn-quiet', { opacity: .3, duration: .07 }, b + .40);
+
+    /* and it lands back in her thread */
+    comeBack('.scene-agent', AT[12], SEG[12].len);
+    push('.m-a4-confirmed', AT[12] + .24, .18, 30);
+  })();
+
+  /* =====================================================================
+     ACT 5 — Operation.  The camera pulls all the way back; the page
+     inverts to ink, and the thread we have followed for the whole
+     sequence compresses into one highlighted card on the board.
+  ===================================================================== */
+  (function act5() {
+    const a = AT[13], dur = SEG[13].len;
+
+    /* offset of an element relative to an ancestor, through any
+       transformed offsetParents in between */
+    const offsetIn = (el, root) => {
+      let x = 0, y = 0, n = el;
+      while (n && n !== root) { x += n.offsetLeft; y += n.offsetTop; n = n.offsetParent; }
+      return { x: x, y: y };
+    };
+    const slotWorld = () => {
+      const scene = document.querySelector('.scene-ops');
+      const o = offsetIn(document.getElementById('lead-slot'), scene);
+      return {
+        x: parseFloat(getComputedStyle(scene).marginLeft) + o.x,
+        y: parseFloat(getComputedStyle(scene).marginTop) + o.y
+      };
+    };
+
+    /* the board arrives from deep space as the room goes dark */
+    tl.fromTo('.scene-ops', { z: -2600, autoAlpha: 0 },
+      { z: 0, autoAlpha: 1, duration: dur * .75, immediateRender: false }, a)
+      .to('.scene-ops', { autoAlpha: 1, duration: dur * .18 }, a);
+
+    /* the one sanctioned background crossfade: Paper → Ink. Kept short so
+       the room is already dark while the thread is still travelling —
+       a long linear crossfade just parks the page in muddy mid-grey. */
+    tl.to('body', { backgroundColor: '#1A1917', duration: dur * .5 }, a)
+      .to('.site-header', {
+        backgroundColor: 'rgba(26,25,23,.82)', borderBottomColor: '#3C3A37', duration: dur * .5
+      }, a)
+      .to('.wordmark', { color: '#FAF9F7', duration: dur * .5 }, a);
+
+    /* the thread flies to the board and compresses into its card.
+       Scale comes from the real card slot, measured at refresh — the
+       column width changes with the viewport. */
+    const slot = document.getElementById('lead-slot');
+    const scaleTo = () => slot.offsetWidth / thread.offsetWidth;
+    tl.set(thread, { transformOrigin: 'top left' }, a)
+      .to(thread, {
+        x: () => slotWorld().x + 308,
+        y: () => slotWorld().y + 312,
+        scale: scaleTo,
+        height: () => slot.offsetHeight / scaleTo(),
+        duration: dur
+      }, a)
+      .to('.thread-face', { opacity: 1, duration: dur * .45 }, a + dur * .35);
+
+    /* the rest of the operation fills in around it */
+    const b = AT[14];
+    tl.fromTo('.kcol', { autoAlpha: 0, y: 70, z: -420 },
+      { autoAlpha: 1, y: 0, z: 0, duration: .2, stagger: .05, immediateRender: false }, b - dur * .5)
+      .fromTo('.kcol .kcard:not(.lead-slot)', { autoAlpha: 0, y: 26 },
+        { autoAlpha: 1, y: 0, duration: .12, stagger: .008, immediateRender: false }, b + .06)
+      .fromTo('.ledger', { autoAlpha: 0, y: 90, z: -520 },
+        { autoAlpha: 1, y: 0, z: 0, duration: .26, immediateRender: false }, b + .62);
+    /* the remainder of the segment is the deliberate hold before the CTA */
+  })();
+
+  /* Pad the timeline so its duration matches the pinned scroll distance */
   tl.to({}, { duration: Math.max(0.01, total - tl.duration()) });
 
   /* --- dev frame capture: ?frame=0.42 --- */
@@ -479,7 +584,7 @@ mm.add('(prefers-reduced-motion: no-preference)', () => {
       tl.pause().progress(0).progress(p);
       const u = p * total;
       let idx = 0;
-      for (let i = 0; i < SEG.length; i++) if (u >= AT[i] - 0.08) idx = SEG[i].r;
+      for (let i = 0; i < SEG.length; i++) if (u >= AT[i]) idx = SEG[i].r;
       rail.ref.textContent = '';
       setRail(idx);
       window.scrollTo(0, 0);
