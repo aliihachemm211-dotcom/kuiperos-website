@@ -642,8 +642,8 @@ body.rail-on .cropmarks { visibility: visible; }
 
 .scene-assign {
   width: 1040px;
-  height: 660px;
-  margin: -330px 0 0 -520px;
+  height: 620px;
+  margin: -310px 0 0 -420px;
   z-index: 4;
 }
 
@@ -765,9 +765,9 @@ body.rail-on .cropmarks { visibility: visible; }
 }
 
 .notify-card {
-  width: 440px;
+  width: 500px;
   margin-left: auto;
-  margin-right: -70px;
+  margin-right: -100px;
   padding: 26px 30px 28px;
   background: var(--card);
   border: 1px solid var(--line);
@@ -782,9 +782,10 @@ body.rail-on .cropmarks { visibility: visible; }
 }
 .notify-main {
   font-family: var(--font-display);
-  font-size: 25px;
-  letter-spacing: -.02em;
+  font-size: 23px;
+  letter-spacing: -.022em;
   margin-top: 14px;
+  white-space: nowrap;
 }
 .notify-sub { font-size: 15px; color: var(--mute); margin-top: 6px; }
 .notify-card .btn-fill { margin-top: 22px; }

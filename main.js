@@ -420,6 +420,51 @@ mm.add('(prefers-reduced-motion: no-preference)', () => {
     push('.m-a2-l3', b + .66, .26, 34);
   })();
 
+  /* =====================================================================
+     ACT 3 — She picks one, and the handoff fires.
+  ===================================================================== */
+  (function act3() {
+    /* she scrolls back to the Achrafieh listing and taps it — the thread
+       travels back down the conversation, which is what the visitor sees */
+    const a = AT[5];
+    tl.to(inner, { y: () => threadY('.m-a2-l1', 34), duration: .26 }, a + .02);
+
+    const btn = '#btn-interest-1';
+    tl.to(btn, { scale: .955, duration: .035 }, a + .32)
+      .to(btn, { scale: 1, duration: .05 }, a + .365)
+      .to(btn, {
+        backgroundColor: '#2C5EFF', borderColor: '#2C5EFF', color: '#FAF9F7',
+        boxShadow: '0 2px 6px rgba(44,94,255,.10), 0 18px 40px -12px rgba(44,94,255,.22)',
+        duration: .07
+      }, a + .34);
+
+    /* the camera leaves for the assignment */
+    leave('.scene-assign', AT[6], SEG[6].len);
+
+    const b = AT[7];
+    /* the two people arrive from opposite sides, with real depth */
+    tl.fromTo('.agent-admin', { autoAlpha: 0, x: -180, z: -700 },
+      { autoAlpha: 1, x: 0, z: 0, duration: .22, immediateRender: false }, b + .02)
+      .fromTo('.agent-karim', { autoAlpha: 0, x: 180, z: -700 },
+        { autoAlpha: 1, x: 0, z: 0, duration: .22, immediateRender: false }, b + .08);
+
+    /* the assignment travels the wire, left to right */
+    const beamW = () => document.querySelector('.beam').offsetWidth;
+    tl.to('.beam-head', { scale: 1, duration: .04 }, b + .34)
+      .to('.beam-fill', { scaleX: 1, duration: .30 }, b + .34)
+      .to('.beam-head', { x: () => beamW(), duration: .30 }, b + .34)
+      .to('.beam-chip', { autoAlpha: 1, y: 0, duration: .07 }, b + .40)
+      /* it lands on Karim */
+      .to('.beam-head', { scale: 2.6, autoAlpha: 0, duration: .09 }, b + .64)
+      .to('.agent-karim', { scale: 1.035, duration: .06 }, b + .64)
+      .to('.agent-karim', { scale: 1, duration: .10 }, b + .70);
+
+    /* and the ping drops out of his card */
+    tl.to('.assign-stem', { scaleY: 1, duration: .10 }, b + .74)
+      .fromTo('.notify-card', { autoAlpha: 0, y: -40, z: -520 },
+        { autoAlpha: 1, y: 0, z: 0, duration: .22, immediateRender: false }, b + .82);
+  })();
+
   /* Placeholder hold for acts not yet rebuilt — filled in next passes. */
   tl.to({}, { duration: Math.max(0.01, total - tl.duration()) });
 
