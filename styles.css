@@ -261,12 +261,13 @@ body.rail-on .cropmarks { visibility: visible; }
   transform-style: preserve-3d;
 }
 
-/* Every world object is centred, then offset by its own transform */
+/* Every world object is centred in the area BELOW the header, then offset
+   by its own transform */
 .thread,
 .scene {
   position: absolute;
   left: 50%;
-  top: 50%;
+  top: calc(50% + var(--header-h) / 2);
   transform-style: preserve-3d;
 }
 
@@ -503,10 +504,11 @@ body.rail-on .cropmarks { visibility: visible; }
    ACT 2 — the matching engine
 --------------------------------------------------------------------------- */
 
+/* Excursion scenes sit right of centre, clear of the fixed side rail */
 .scene-engine {
-  width: 1080px;
-  height: 700px;
-  margin: -350px 0 0 -540px;
+  width: 1180px;
+  height: 830px;
+  margin: -415px 0 0 -480px;
   z-index: 4;
 }
 
@@ -557,21 +559,22 @@ body.rail-on .cropmarks { visibility: visible; }
 
 .engine-grid {
   display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: 9px;
+  grid-template-columns: repeat(14, 1fr);
+  gap: 8px;
 }
 
 .tile {
   position: relative;
-  border-radius: 7px;
+  border-radius: 6px;
   overflow: hidden;
   background: #EDEAE5;
   border: 1px solid var(--line);
-  aspect-ratio: 1 / 1.24;
+  aspect-ratio: 1 / 1.4;
+  box-shadow: var(--lift-1);
 }
 .tile img {
   width: 100%;
-  height: 62%;
+  height: 64%;
   object-fit: cover;
   display: block;
 }
@@ -608,16 +611,16 @@ body.rail-on .cropmarks { visibility: visible; }
 
 .listing-msg {
   width: 480px;
-  padding: 14px 14px 16px;
+  padding: 13px 13px 15px;
 }
 .listing-photo {
   position: relative;
-  height: 216px;
-  border-radius: 13px;
+  height: 168px;
+  border-radius: 12px;
   overflow: hidden;
 }
 .listing-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.listing-meta { padding: 14px 10px 4px; }
+.listing-meta { padding: 12px 9px 2px; }
 .listing-ref {
   font-family: var(--font-mono);
   font-size: 10px;
@@ -626,12 +629,12 @@ body.rail-on .cropmarks { visibility: visible; }
 }
 .listing-title {
   font-family: var(--font-display);
-  font-size: 24px;
+  font-size: 22px;
   letter-spacing: -.02em;
-  margin-top: 8px;
+  margin-top: 6px;
 }
-.listing-desc { font-size: 14.5px !important; color: var(--mute); margin-top: 4px; }
-.btn-interest { margin-top: 14px; }
+.listing-desc { font-size: 14px !important; color: var(--mute); margin-top: 3px; }
+.btn-interest { margin-top: 12px; height: 46px; }
 
 /* ---------------------------------------------------------------------------
    ACT 3 — assignment

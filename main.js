@@ -50,7 +50,7 @@ const RAIL = [
 ];
 
 function setRail(i) {
-  const r = RAIL[i];
+  const r = RAIL[Math.max(0, Math.min(RAIL.length - 1, i | 0))];
   if (rail.ref.textContent === r.ref) return;
   rail.ref.textContent = r.ref;
   rail.step.textContent = r.step;
@@ -67,26 +67,46 @@ const PHOTOS = ['Assets/Listing 1.jpg', 'Assets/Listing 2.jpg', 'Assets/Listing 
 const AREAS = ['ACHRAFIEH', 'HAMRA', 'DBAYEH', 'JOUNIEH', 'BADARO', 'MAR MIKHAEL',
                'VERDUN', 'RABIEH', 'ANTELIAS', 'GEMMAYZE', 'ZALKA', 'BAABDA'];
 
-/* The three winners sit where the eye lands — upper-middle band of the grid */
-const WINNERS = [26, 31, 40];
+/* 14-column grid; the three winners sit in the upper-middle band, spread
+   apart so the survivors read as scattered across the whole field */
+const WINNERS = [17, 22, 33];
+
+/* Eliminations per round, so the counter reads 84 → 41 → 12 → 3 */
+const ROUND_SIZE = [43, 29, 9];
 
 function buildEngine() {
   const grid = document.getElementById('engine-grid');
   if (!grid || grid.childElementCount) return;
+
+  /* Scatter the eliminations across the grid (deterministically) so the
+     field thins out everywhere at once, rather than wiping in reading order */
+  const others = [];
+  for (let i = 0; i < 84; i++) if (WINNERS.indexOf(i) === -1) others.push(i);
+  others.sort((a, b) => ((a * 37) % 84) - ((b * 37) % 84));
+  const round = {};
+  let k = 0;
+  ROUND_SIZE.forEach((n, r) => { for (let j = 0; j < n; j++) round[others[k++]] = r + 1; });
+
+  /* The survivors are the exact three listings that then arrive in the
+     thread — same areas, same photos, same prices. */
+  const WIN_DATA = [
+    { area: 'ACHRAFIEH', price: 180, photo: 0, score: 98 },
+    { area: 'DBAYEH',    price: 176, photo: 1, score: 94 },
+    { area: 'JOUNIEH',   price: 168, photo: 2, score: 91 }
+  ];
+
   const frag = document.createDocumentFragment();
   for (let i = 0; i < 84; i++) {
     const t = document.createElement('div');
-    t.className = 'tile';
     const win = WINNERS.indexOf(i);
-    /* every non-winner is eliminated in round 1, 2 or 3 */
-    t.dataset.round = win > -1 ? '0' : String((i % 3) + 1);
-    const area = AREAS[i % AREAS.length];
-    const beds = win > -1 ? 2 : (i % 4) + 1;
-    const price = win > -1 ? [172, 168, 179][win] : 90 + ((i * 37) % 260);
+    const w = win > -1 ? WIN_DATA[win] : null;
+    t.className = 'tile';
+    t.dataset.round = w ? '0' : String(round[i]);
     t.innerHTML =
-      '<img src="' + PHOTOS[i % 3] + '" alt="" loading="lazy">' +
-      '<div class="tile-data"><b>' + area.slice(0, 9) + '</b>' + beds + 'BR · $' + price + 'K</div>' +
-      '<div class="tile-score">' + [98, 94, 91][win > -1 ? win : 0] + '% MATCH</div>';
+      '<img src="' + PHOTOS[w ? w.photo : i % 3] + '" alt="" loading="lazy">' +
+      '<div class="tile-data"><b>' + (w ? w.area : AREAS[i % AREAS.length].slice(0, 9)) + '</b>' +
+      (w ? 2 : (i % 4) + 1) + 'BR · $' + (w ? w.price : 90 + ((i * 37) % 260)) + 'K</div>' +
+      '<div class="tile-score">' + (w ? w.score : 0) + '%</div>';
     frag.appendChild(t);
   }
   grid.appendChild(frag);
@@ -155,7 +175,7 @@ function threadY(sel, pad) {
 /* Fit the whole stage to short viewports (continuous, never stepped). */
 function fitStage() {
   if (document.body.classList.contains('reduced')) return;
-  const need = 800;
+  const need = 920; /* tallest composition: the engine, head + filters + grid */
   const have = window.innerHeight - 40;
   const s = Math.min(1, have / need);
   stage.style.transform = s < 1 ? 'scale(' + s.toFixed(4) + ')' : 'none';
@@ -205,17 +225,25 @@ mm.add('(prefers-reduced-motion: no-preference)', () => {
   gsap.set('.kcol .kcard:not(.lead-slot)', { autoAlpha: 0 });
   gsap.set('.ledger', { autoAlpha: 0 });
 
-  /* Segment plan — units are viewport-heights of scroll */
+  /* Segment plan — units are viewport-heights of scroll.
+     `r` is the side-rail act index; the camera alternates between the
+     thread and its excursions throughout. */
   const SEG = [
-    { act: 0, len: 1.50 },  /* Contact          */
-    { act: 0, len: 0.40, t: true },
-    { act: 1, len: 2.30 },  /* Matching         */
-    { act: 1, len: 0.40, t: true },
-    { act: 2, len: 1.60 },  /* Assignment       */
-    { act: 2, len: 0.40, t: true },
-    { act: 3, len: 1.40 },  /* Booking          */
-    { act: 3, len: 0.45, t: true },
-    { act: 4, len: 1.70 }   /* Operation        */
+    { r: 0, len: 1.50 },  /*  0  thread: contact + form         */
+    { r: 0, len: 0.40 },  /*  1  → engine                       */
+    { r: 1, len: 1.90 },  /*  2  engine narrows 84 → 3          */
+    { r: 1, len: 0.40 },  /*  3  → back to thread               */
+    { r: 1, len: 1.15 },  /*  4  three listings arrive          */
+    { r: 2, len: 0.50 },  /*  5  she taps "I am interested"     */
+    { r: 2, len: 0.40 },  /*  6  → assignment                   */
+    { r: 2, len: 1.15 },  /*  7  handoff to Karim               */
+    { r: 3, len: 0.40 },  /*  8  → back to thread               */
+    { r: 3, len: 0.75 },  /*  9  calendar arrives, slot picked  */
+    { r: 3, len: 0.40 },  /* 10  → agent desk                   */
+    { r: 3, len: 0.60 },  /* 11  agent confirms                 */
+    { r: 3, len: 0.55 },  /* 12  → back to thread, confirmed    */
+    { r: 4, len: 0.50 },  /* 13  → the control room             */
+    { r: 4, len: 1.70 }   /* 14  the whole operation            */
   ];
   const AT = [];
   let total = 0;
@@ -234,7 +262,7 @@ mm.add('(prefers-reduced-motion: no-preference)', () => {
       onUpdate: (self) => {
         const u = self.progress * total;
         let idx = 0;
-        for (let i = 0; i < SEG.length; i++) if (u >= AT[i] - 0.2) idx = SEG[i].act;
+        for (let i = 0; i < SEG.length; i++) if (u >= AT[i] - 0.08) idx = SEG[i].r;
         setRail(idx);
       }
     }
@@ -253,7 +281,9 @@ mm.add('(prefers-reduced-motion: no-preference)', () => {
 
   /* The camera leaves the thread for an excursion, then returns. */
   function leave(scene, at, dur) {
-    tl.to(thread, { x: -1150, z: -600, duration: dur }, at)
+    /* far enough that the thread clears the frame entirely — the camera has
+       genuinely left it, rather than parking it on top of the side rail */
+    tl.to(thread, { x: -1750, z: -700, duration: dur }, at)
       .fromTo(scene, { z: -2400, autoAlpha: 0 },
         { z: 0, autoAlpha: 1, duration: dur, immediateRender: false }, at)
       .to(scene, { autoAlpha: 1, duration: dur * .22 }, at);
@@ -320,12 +350,78 @@ mm.add('(prefers-reduced-motion: no-preference)', () => {
   })();
 
   /* =====================================================================
-     Transition 1 -> 2 : out of the chat, into the engine
+     ACT 2 — Matching.  Out of the chat, into the engine; the engine
+     visibly narrows the field; back into the chat with the winners.
   ===================================================================== */
   leave('.scene-engine', AT[1], SEG[1].len);
 
-  /* Placeholder holds for acts not yet rebuilt — filled in next passes. */
-  tl.to({}, { duration: total - tl.duration() });
+  (function act2() {
+    const a = AT[2];
+
+    /* the three criteria land, one per elimination round */
+    gsap.set('.fchip', { autoAlpha: 0, y: 20 });
+    gsap.set('.engine-count', { autoAlpha: 0, y: 16 });
+    tl.to('.engine-count', { autoAlpha: 1, y: 0, duration: .1 }, a + .02);
+
+    /* a live counter — the field shrinking is the headline number */
+    const n = { v: 84 };
+    const numEl = document.getElementById('engine-num');
+    const unitEl = document.getElementById('engine-unit');
+    const REMAIN = [84, 41, 12, 3];
+
+    ROUND_SIZE.forEach((_, r) => {
+      const t = a + .22 + r * .42;
+      const tiles = gsap.utils.toArray('.tile[data-round="' + (r + 1) + '"]');
+
+      /* criterion snaps in and turns accent as it starts filtering */
+      tl.to('.fchip[data-w="' + (r + 1) + '"]', { autoAlpha: 1, y: 0, duration: .05 }, t)
+        .to('.fchip[data-w="' + (r + 1) + '"]', {
+          borderColor: '#2C5EFF', color: '#1E45CC',
+          backgroundColor: 'rgba(44,94,255,.07)', duration: .05
+        }, t + .05);
+
+      /* eliminated listings drop back into the depth of the grid */
+      tl.to(tiles, {
+        z: -520, scale: .86, y: 16, opacity: .13,
+        duration: .2, stagger: { each: .0022, from: 'random' }
+      }, t + .08);
+
+      /* the count runs down with them */
+      tl.to(n, {
+        v: REMAIN[r + 1], duration: .22, snap: { v: 1 },
+        onUpdate: () => { numEl.textContent = Math.round(n.v); }
+      }, t + .08);
+    });
+
+    /* the three survivors come forward, out of the plane of the grid */
+    const wins = WINNERS.map(i => '.tile:nth-child(' + (i + 1) + ')');
+    tl.to(wins, {
+      z: 210, scale: 1.5, duration: .3, stagger: .07
+    }, a + 1.30)
+      .to(wins, {
+        borderColor: '#2C5EFF',
+        boxShadow: '0 0 0 1.5px #2C5EFF, 0 10px 30px -6px rgba(44,94,255,.45)',
+        duration: .12, stagger: .07
+      }, a + 1.32)
+      .to(wins.map(w => w + ' .tile-score'), {
+        y: 0, opacity: 1, duration: .1, stagger: .07
+      }, a + 1.40);
+
+    tl.call(() => { unitEl.textContent = 'MATCHES'; }, null, a + 1.34)
+      .call(() => { unitEl.textContent = 'ACTIVE LISTINGS'; }, null, a + 1.32);
+
+    /* back into the chat — the engine passes the camera */
+    comeBack('.scene-engine', AT[3], SEG[3].len);
+
+    /* the winners arrive as messages */
+    const b = AT[4];
+    push('.m-a2-l1', b + .02, .26, 34);
+    push('.m-a2-l2', b + .34, .26, 34);
+    push('.m-a2-l3', b + .66, .26, 34);
+  })();
+
+  /* Placeholder hold for acts not yet rebuilt — filled in next passes. */
+  tl.to({}, { duration: Math.max(0.01, total - tl.duration()) });
 
   /* --- dev frame capture: ?frame=0.42 --- */
   const fp = new URLSearchParams(location.search).get('frame');
@@ -338,7 +434,7 @@ mm.add('(prefers-reduced-motion: no-preference)', () => {
       tl.pause().progress(0).progress(p);
       const u = p * total;
       let idx = 0;
-      for (let i = 0; i < SEG.length; i++) if (u >= AT[i] - 0.2) idx = SEG[i].act;
+      for (let i = 0; i < SEG.length; i++) if (u >= AT[i] - 0.08) idx = SEG[i].r;
       rail.ref.textContent = '';
       setRail(idx);
       window.scrollTo(0, 0);
