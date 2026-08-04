@@ -1,657 +1,275 @@
 /* ===========================================================================
-   kuiperOS — one continuous scroll-scrubbed camera move.
+   kuiperOS v2 — checkpoint 1: laptop frame, tab mechanics, Act 1 (Inbox).
 
-   The chat THREAD is the spine: a single column of messages that only ever
-   travels upward as the conversation advances. The camera leaves the thread
-   to visit system internals (matching engine, assignment, agent desk, ops
-   board) and always comes back to it.
-
-   Motion rule: nothing "fades in". Everything travels, scales, or passes the
-   camera. Opacity only ever supports a move already in progress.
+   The chat thread is the spine. Everything the lead receives arrives as a
+   message in it. Motion is physical: the screen wakes, the panel pushes in,
+   the thread travels, a real cursor drifts and overshoots, text types.
 =========================================================================== */
 
 gsap.registerPlugin(ScrollTrigger);
 ScrollTrigger.config({ ignoreMobileResize: true });
 
+const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const FRAME = new URLSearchParams(location.search).get('frame');
+
 /* ---------------------------------------------------------------------------
-   Lenis smooth scroll, wired to ScrollTrigger the way GSAP documents it.
-
-   Lenis drives the real window scroll position, so ScrollTrigger needs no
-   scrollerProxy — only (a) an update on every Lenis scroll event and (b) a
-   single shared RAF loop, which GSAP's ticker owns. lagSmoothing(0) stops
-   GSAP from swallowing a frame delta after a stall, which would otherwise
-   desync the two.
-
-   Skipped entirely for prefers-reduced-motion (smooth scroll is motion the
-   visitor asked not to have) and for the ?frame= capture mode, which sets
-   scroll position directly.
+   Lenis, wired to ScrollTrigger the way GSAP documents it: Lenis drives the
+   real window scroll, so no scrollerProxy — just an update per scroll event,
+   one shared RAF loop owned by gsap.ticker, and lagSmoothing off so a stalled
+   frame can't desync the two.
 --------------------------------------------------------------------------- */
 let lenis = null;
-
-function initLenis() {
-  if (typeof Lenis === 'undefined') return;
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  if (new URLSearchParams(location.search).has('frame')) return;
-
-  lenis = new Lenis({
-    duration: 1.05,     /* how long the scroll takes to settle */
-    smoothWheel: true,
-    syncTouch: false,   /* touch keeps native momentum — better on phones */
-    autoRaf: false      /* GSAP's ticker is the only RAF loop */
-  });
-
+if (typeof Lenis !== 'undefined' && !REDUCED && FRAME === null) {
+  lenis = new Lenis({ duration: 1.05, smoothWheel: true, syncTouch: false, autoRaf: false });
   lenis.on('scroll', ScrollTrigger.update);
-  gsap.ticker.add((time) => lenis.raf(time * 1000));
+  gsap.ticker.add((t) => lenis.raf(t * 1000));
   gsap.ticker.lagSmoothing(0);
-
-  /* exposed so tooling (and any later in-page anchor navigation) can drive
-     scroll through Lenis rather than fighting it with window.scrollTo */
   window.__lenis = lenis;
 }
 
-initLenis();
+/* --------------------------------------------------------------------------- */
 
-const PERSP = 1400;
-const stage = document.querySelector('.act-stage');
-const camera = document.querySelector('.camera');
-const thread = document.querySelector('#thread');
-const inner = document.querySelector('#thread-inner');
+const screenEl = document.getElementById('screen');
+const machine  = document.getElementById('machine');
+const thread   = document.getElementById('thread');
+const inner    = document.getElementById('thread-inner');
+const cursor   = document.getElementById('cursor');
+const ring     = document.getElementById('click-ring');
+const underline = document.getElementById('tab-underline');
+const narrLine = document.getElementById('narration-line');
 
-const rail = {
-  ref: document.getElementById('rail-ref'),
-  step: document.getElementById('rail-step'),
-  cap: document.getElementById('rail-caption')
-};
+const SCREEN_W = 1240, SCREEN_H = 780;
 
-/* --- Analytics: one event per act entry --- */
-const trackAct = (() => {
-  const seen = new Set();
-  return (n) => {
-    if (seen.has(n)) return;
-    seen.add(n);
-    window.dataLayer = window.dataLayer || [];
-    window.dataLayer.push({ event: 'act_entry', act: n });
-  };
-})();
+/* Section 8.3 — Inbox caption, verbatim */
+const CAPTION_INBOX = 'A message arrives at 10:41am. In thirty seconds, the lead is qualified — not just logged.';
 
-const RAIL = [
-  { ref: 'THREAD—0417', step: '01 / 05',
-    cap: ['A message arrives at 10:41am.', 'In thirty seconds, the lead is qualified — not just logged.'] },
-  { ref: 'MATCH—0417', step: '02 / 05',
-    cap: ['Eighty-four listings. Only three match this inquiry.', 'The matching engine does the rest.'] },
-  { ref: 'HANDOFF—0417', step: '03 / 05',
-    cap: ['She picks one. The right agent is assigned with a click, and pinged instantly.'] },
-  { ref: 'VIEWING—0417', step: '04 / 05',
-    cap: ['The lead picks from the available slots.', 'The agent confirms with a click.'] },
-  { ref: 'OPS—0417', step: '05 / 05',
-    cap: ['This is one thread.', 'Forty-two others are running the same way, right now.'] }
+/* Section 8.4 — demo data, in the field order given by 8.5 */
+const FIELDS = [
+  { v: 'Rania K.' },
+  { v: '+961 3 xxx xxx' },
+  { v: 'Achrafieh, Beirut' },
+  { v: '2' },
+  { v: '$180,000' },
+  { v: 'Ready now', select: true }
 ];
 
-function setRail(i) {
-  const r = RAIL[Math.max(0, Math.min(RAIL.length - 1, i | 0))];
-  if (rail.ref.textContent === r.ref) return;
-  rail.ref.textContent = r.ref;
-  rail.step.textContent = r.step;
-  rail.cap.innerHTML = r.cap.map(l => '<p>' + l + '</p>').join('');
-  document.body.classList.toggle('inverted', i === 4);
-  trackAct(i + 1);
-}
-
-/* ===========================================================================
-   Content generation — the engine grid and the ops board
-=========================================================================== */
-
-const PHOTOS = ['Assets/Listing 1.jpg', 'Assets/Listing 2.jpg', 'Assets/Listing 3.jpg'];
-const AREAS = ['ACHRAFIEH', 'HAMRA', 'DBAYEH', 'JOUNIEH', 'BADARO', 'MAR MIKHAEL',
-               'VERDUN', 'RABIEH', 'ANTELIAS', 'GEMMAYZE', 'ZALKA', 'BAABDA'];
-
-/* 14-column grid; the three winners sit in the upper-middle band, spread
-   apart so the survivors read as scattered across the whole field */
-const WINNERS = [17, 22, 33];
-
-/* Eliminations per round, so the counter reads 84 → 41 → 12 → 3 */
-const ROUND_SIZE = [43, 29, 9];
-
-function buildEngine() {
-  const grid = document.getElementById('engine-grid');
-  if (!grid || grid.childElementCount) return;
-
-  /* Scatter the eliminations across the grid (deterministically) so the
-     field thins out everywhere at once, rather than wiping in reading order */
-  const others = [];
-  for (let i = 0; i < 84; i++) if (WINNERS.indexOf(i) === -1) others.push(i);
-  others.sort((a, b) => ((a * 37) % 84) - ((b * 37) % 84));
-  const round = {};
-  let k = 0;
-  ROUND_SIZE.forEach((n, r) => { for (let j = 0; j < n; j++) round[others[k++]] = r + 1; });
-
-  /* The survivors are the exact three listings that then arrive in the
-     thread — same areas, same photos, same prices. */
-  const WIN_DATA = [
-    { area: 'ACHRAFIEH', price: 180, photo: 0, score: 98 },
-    { area: 'DBAYEH',    price: 176, photo: 1, score: 94 },
-    { area: 'JOUNIEH',   price: 168, photo: 2, score: 91 }
-  ];
-
-  const frag = document.createDocumentFragment();
-  for (let i = 0; i < 84; i++) {
-    const t = document.createElement('div');
-    const win = WINNERS.indexOf(i);
-    const w = win > -1 ? WIN_DATA[win] : null;
-    t.className = 'tile';
-    t.dataset.round = w ? '0' : String(round[i]);
-    t.innerHTML =
-      '<img src="' + PHOTOS[w ? w.photo : i % 3] + '" alt="" loading="lazy">' +
-      '<div class="tile-data"><b>' + (w ? w.area : AREAS[i % AREAS.length].slice(0, 9)) + '</b>' +
-      (w ? 2 : (i % 4) + 1) + 'BR · $' + (w ? w.price : 90 + ((i * 37) % 260)) + 'K</div>' +
-      '<div class="tile-score">' + (w ? w.score : 0) + '%</div>';
-    frag.appendChild(t);
-  }
-  grid.appendChild(frag);
-}
-
-const CLIENTS = [
-  'Nadia H.', 'Marc B.', 'Layla S.', 'Tarek A.', 'Joelle N., ', 'Ziad M.', 'Maya F.',
-  'Rami T.', 'Carine D.', 'Elie G.', 'Nour S.', 'Hadi Z.', 'Yara C.', 'Fadi R.',
-  'Lea P.', 'Omar J.', 'Rita B.', 'Sarah W.', 'Georges A.', 'Mona K.', 'Bilal H.',
-  'Tala R.', 'Nabil S.', 'Perla M.', 'Wissam D.', 'Aline T.', 'Jad F.', 'Reem A.',
-  'Kamal N.', 'Sandra L.', 'Hiba Y.', 'Michel C.', 'Dalia E.', 'Samir O.'
-];
-
-function buildOps() {
-  const board = document.getElementById('kanban');
-  if (!board || board.childElementCount) return;
-  const cols = [
-    { name: 'NEW', n: 8 },
-    { name: 'QUALIFIED', n: 7 },
-    { name: 'MATCHED', n: 6, lead: true },
-    { name: 'ASSIGNED', n: 7 },
-    { name: 'CONTACTED', n: 6 }
-  ];
-  let c = 0, ref = 1000;
-  cols.forEach(col => {
-    const el = document.createElement('div');
-    el.className = 'kcol';
-    el.innerHTML = '<div class="kcol-head"><span>' + col.name +
-      '</span><span class="kcol-count">' + col.n + '</span></div>';
-    if (col.lead) {
-      /* the thread itself docks here — this slot reserves its footprint */
-      const slot = document.createElement('div');
-      slot.className = 'kcard lead-slot';
-      slot.id = 'lead-slot';
-      slot.style.visibility = 'hidden';
-      slot.innerHTML = '<span class="kcard-name">RANIA K.</span><span class="kcard-ref">THREAD-0417</span>';
-      el.appendChild(slot);
-    }
-    for (let i = 0; i < col.n; i++) {
-      const card = document.createElement('div');
-      card.className = 'kcard';
-      card.innerHTML = '<span class="kcard-name">' + CLIENTS[c % CLIENTS.length].trim().replace(/,$/, '') +
-        '</span><span class="kcard-ref">REF-' + (ref += 37) + '</span>';
-      el.appendChild(card);
-      c++;
-    }
-    board.appendChild(el);
-  });
-}
-
-buildEngine();
-buildOps();
-
-/* ===========================================================================
-   Layout helpers
-=========================================================================== */
-
-/* Scroll the thread so `el` rests just above the thread's lower edge. */
-function threadY(sel, pad) {
-  const el = document.querySelector(sel);
-  if (!el) return 0;
-  const h = thread.offsetHeight;
-  return Math.min(h, -(el.offsetTop + el.offsetHeight - h + (pad === undefined ? 52 : pad)));
-}
-
-/* Fit the whole stage to short viewports (continuous, never stepped). */
-function fitStage() {
+/* ---------------------------------------------------------------------------
+   Fit the machine to the viewport. Transform scale would leave a full-size
+   layout box behind, so the box is pulled back in with compensating margins.
+--------------------------------------------------------------------------- */
+function fitMachine() {
   if (document.body.classList.contains('reduced')) return;
-  const need = 920; /* tallest composition: the engine, head + filters + grid */
-  const have = window.innerHeight - 40;
-  const s = Math.min(1, have / need);
-  stage.style.transform = s < 1 ? 'scale(' + s.toFixed(4) + ')' : 'none';
-  stage.style.transformOrigin = '50% 50%';
+  const W = machine.offsetWidth, H = machine.offsetHeight;
+  if (!W || !H) return;
+  const availW = window.innerWidth - 2 * 40;
+  const chrome = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) || 88;
+  const availH = window.innerHeight - chrome - 150; /* room for the narration */
+  const s = Math.min(1, availW / W, availH / H);
+  machine.style.transform = 'scale(' + s.toFixed(4) + ')';
+  machine.style.margin = (-(1 - s) * H / 2).toFixed(1) + 'px ' + (-(1 - s) * W / 2).toFixed(1) + 'px';
+  machine.dataset.scale = s;
 }
+
+/* point at the centre of an element, in screen-local coordinates */
+function ptIn(el) {
+  const s = screenEl.getBoundingClientRect();
+  const r = el.getBoundingClientRect();
+  const k = s.width / SCREEN_W || 1;
+  return { x: (r.left - s.left) / k + r.width / (2 * k), y: (r.top - s.top) / k + r.height / (2 * k) };
+}
+
+/* thread travel: put `el` just above the thread's lower edge */
+function threadY(el, pad) {
+  const h = thread.offsetHeight;
+  return Math.min(h, -(el.offsetTop + el.offsetHeight - h + (pad === undefined ? 26 : pad)));
+}
+
+/* split the caption into word spans so it can arrive word by word */
+function buildCaption(text) {
+  narrLine.innerHTML = text.split(' ')
+    .map(w => '<span class="w">' + w + '</span>').join(' ');
+  return gsap.utils.toArray('#narration-line .w');
+}
+
+/* ---------------------------------------------------------------------------
+   Build
+--------------------------------------------------------------------------- */
 
 const mm = gsap.matchMedia();
 
-/* ===========================================================================
-   The cinematic build
-=========================================================================== */
 mm.add('(prefers-reduced-motion: no-preference)', () => {
 
-  fitStage();
-  ScrollTrigger.addEventListener('refreshInit', fitStage);
+  fitMachine();
+  ScrollTrigger.addEventListener('refreshInit', fitMachine);
 
-  /* --- Opener --- */
-  gsap.set(['.opener-tension-1', '.opener-tension-2', '.opener-pivot'], { autoAlpha: 0, y: 34 });
+  const words = buildCaption(CAPTION_INBOX);
+
+  /* --- opener --- */
+  gsap.set(['.opener-tension', '.opener-sub', '.opener-pivot'], { autoAlpha: 0, y: 30 });
   gsap.timeline({
     defaults: { ease: 'none' },
-    scrollTrigger: {
-      trigger: '#opener', start: 'top top', end: '+=130%',
-      pin: true, scrub: true, invalidateOnRefresh: true
-    }
+    scrollTrigger: { trigger: '#opener', start: 'top top', end: '+=130%', pin: true, scrub: true, invalidateOnRefresh: true }
   })
-    .to('.opener-tension-1', { autoAlpha: 1, y: 0, duration: .2 }, .06)
-    .to('.opener-tension-2', { autoAlpha: 1, y: 0, duration: .2 }, .34)
-    .to('.opener-pivot', { autoAlpha: 1, y: 0, duration: .2 }, .64)
+    .to('.opener-tension', { autoAlpha: 1, y: 0, duration: .2 }, .06)
+    .to('.opener-sub',     { autoAlpha: 1, y: 0, duration: .2 }, .34)
+    .to('.opener-pivot',   { autoAlpha: 1, y: 0, duration: .2 }, .64)
     .to({}, { duration: .16 });
 
-  /* --- Base state: thread holds the frame, all content below the fold --- */
-  gsap.set(inner, { y: () => thread.offsetHeight });
-  gsap.set(thread, { x: 0, y: 0, z: 0, scale: 1 });
-  gsap.set(['.scene-engine', '.scene-assign', '.scene-agent', '.scene-ops'],
-    { autoAlpha: 0, z: -2400 });
-  gsap.set('.focus-ring', { autoAlpha: 0 });
-  gsap.set('.fval', { y: 38 }); /* fully below the 46px field box until entered */
-  gsap.set('.tile-score', { y: 14 });
-  gsap.set('.beam-fill', { scaleX: 0, transformOrigin: 'left center' });
-  gsap.set('.beam-head', { x: 0, scale: 0 });
-  gsap.set('.beam-chip', { autoAlpha: 0, y: 10 });
-  gsap.set('.assign-stem', { scaleY: 0, transformOrigin: 'top center' });
-  gsap.set(['.agent-admin', '.agent-karim'], { autoAlpha: 0 });
-  gsap.set('.notify-card', { autoAlpha: 0 });
-  gsap.set('.scene-agent .agent-mini, .booking-card', { autoAlpha: 0 });
-  gsap.set('.kcol', { autoAlpha: 0 });
-  gsap.set('.kcol .kcard:not(.lead-slot)', { autoAlpha: 0 });
-  gsap.set('.ledger', { autoAlpha: 0 });
+  /* --- base state: screen asleep, app pushed back, thread below the fold --- */
+  const panel = document.getElementById('panel-inbox');
+  const appbar = document.querySelector('.appbar');
 
-  /* Segment plan — units are viewport-heights of scroll.
-     `r` is the side-rail act index; the camera alternates between the
-     thread and its excursions throughout. */
-  const SEG = [
-    { r: 0, len: 1.50 },  /*  0  thread: contact + form         */
-    { r: 0, len: 0.40 },  /*  1  → engine                       */
-    { r: 1, len: 1.90 },  /*  2  engine narrows 84 → 3          */
-    { r: 1, len: 0.40 },  /*  3  → back to thread               */
-    { r: 1, len: 1.15 },  /*  4  three listings arrive          */
-    { r: 2, len: 0.50 },  /*  5  she taps "I am interested"     */
-    { r: 2, len: 0.40 },  /*  6  → assignment                   */
-    { r: 2, len: 1.15 },  /*  7  handoff to Karim               */
-    { r: 3, len: 0.40 },  /*  8  → back to thread               */
-    { r: 3, len: 0.75 },  /*  9  calendar arrives, slot picked  */
-    { r: 3, len: 0.40 },  /* 10  → agent desk                   */
-    { r: 3, len: 0.60 },  /* 11  agent confirms                 */
-    { r: 3, len: 0.55 },  /* 12  → back to thread, confirmed    */
-    { r: 4, len: 0.50 },  /* 13  → the control room             */
-    { r: 4, len: 1.70 }   /* 14  the whole operation            */
-  ];
-  const AT = [];
-  let total = 0;
-  SEG.forEach((s, i) => { AT[i] = total; total += s.len; });
+  gsap.set(screenEl, { backgroundColor: '#0F0E0D' });
+  gsap.set([appbar, panel], { autoAlpha: 0, scale: .965, filter: 'blur(9px)', y: 14 });
+  gsap.set(underline, { x: 0, width: 0 });
+  gsap.set(inner, { y: () => thread.offsetHeight });
+  gsap.set(['#m-ask', '#m-reply', '#m-form', '#m-captured'], { autoAlpha: 1 });
+  gsap.set(cursor, { autoAlpha: 1, x: SCREEN_W + 60, y: SCREEN_H - 120 });
+  gsap.set(ring, { scale: .4, autoAlpha: 0 });
+  gsap.set(words, { autoAlpha: 0, y: 16, filter: 'blur(5px)' });
+  FIELDS.forEach((f, i) => {
+    const el = document.querySelector('.ff[data-f="' + i + '"] .fval');
+    if (el) el.textContent = '';
+  });
+
+  const T = { boot: 0, total: 3.40 };
 
   const tl = gsap.timeline({
     defaults: { ease: 'none' },
     scrollTrigger: {
       id: 'seq',
       trigger: '#sequence', start: 'top top',
-      end: () => '+=' + (total * 100) + '%',
+      end: () => '+=' + (T.total * 100) + '%',
       pin: true, scrub: true, invalidateOnRefresh: true,
-      onEnter: () => document.body.classList.add('rail-on'),
-      onEnterBack: () => document.body.classList.add('rail-on'),
-      onLeaveBack: () => document.body.classList.remove('rail-on'),
-      onUpdate: (self) => {
-        const u = self.progress * total;
-        let idx = 0;
-        for (let i = 0; i < SEG.length; i++) if (u >= AT[i]) idx = SEG[i].r;
-        setRail(idx);
-      }
+      onUpdate: (self) => setFocus(self.progress * T.total)
     }
   });
 
-  /* ---------------------------------------------------------------------
-     Reusable physics
-  --------------------------------------------------------------------- */
+  /* ---- boot: the screen wakes, the app pushes in, the underline slides ---- */
+  tl.to(screenEl, { backgroundColor: '#FAF9F7', duration: .22 }, 0)
+    .to([appbar, panel], { autoAlpha: 1, duration: .12 }, .06)
+    .to([appbar, panel], { scale: 1, filter: 'blur(0px)', y: 0, duration: .34 }, .06)
+    /* the underline physically slides onto Inbox, never teleports */
+    .to(underline, {
+      x: () => { const t = document.querySelector('.tab.is-active'); return t.offsetLeft; },
+      width: () => document.querySelector('.tab.is-active').offsetWidth,
+      duration: .26
+    }, .16);
 
-  /* A message arrives: the whole column travels up to make room. No fade —
-     the message was always below the fold, the thread simply moves. */
-  function push(sel, at, dur, pad) {
-    tl.to(inner, { y: () => threadY(sel, pad), duration: dur }, at);
-    tl.fromTo(sel, { scale: .965 }, { scale: 1, duration: dur * .8, immediateRender: false }, at);
+  /* ---- caption arrives, word by word ---- */
+  tl.to(words, {
+    autoAlpha: 1, y: 0, filter: 'blur(0px)',
+    duration: .16, stagger: { each: .022 }
+  }, .46);
+
+  /* ---- the thread ---- */
+  const push = (sel, at, dur, pad) => {
+    const el = document.querySelector(sel);
+    tl.to(inner, { y: () => threadY(el, pad), duration: dur }, at);
+    tl.fromTo(sel, { scale: .97 }, { scale: 1, duration: dur * .75, immediateRender: false }, at);
+  };
+
+  push('#m-ask',   .50, .26);
+  push('#m-reply', .88, .26);
+  push('#m-form', 1.22, .30, 20);
+
+  /* ---- the cursor fills the form ---- */
+  const moveTo = (el, at, dur, ox, oy) => {
+    /* overshoot, then correct — a hand, not a robot */
+    tl.to(cursor, { x: () => ptIn(el).x + ox, y: () => ptIn(el).y + oy, duration: dur * .68 }, at)
+      .to(cursor, { x: () => ptIn(el).x, y: () => ptIn(el).y, duration: dur * .32 }, at + dur * .68);
+  };
+  const click = (at) => {
+    tl.set(ring, { x: () => gsap.getProperty(cursor, 'x'), y: () => gsap.getProperty(cursor, 'y'), immediateRender: false }, at)
+      .fromTo(ring, { scale: .35, autoAlpha: .9 }, { scale: 1.7, autoAlpha: 0, duration: .07, immediateRender: false }, at);
+  };
+
+  const F0 = 1.62, STEP = .18;
+  FIELDS.forEach((f, i) => {
+    const box = document.querySelector('.ff[data-f="' + i + '"] .fbox');
+    const val = document.querySelector('.ff[data-f="' + i + '"] .fval');
+    const at = F0 + i * STEP;
+    const ox = (i % 2 ? 16 : -14), oy = (i % 3 ? 11 : -9);
+
+    moveTo(box, at, .085, ox, oy);
+    click(at + .09);
+
+    if (f.select) {
+      /* A select is chosen, not typed. Driven by a proxy rather than set(),
+         so the value is derived from progress and is correct scrubbing in
+         either direction. */
+      const p = { n: 0 };
+      tl.to(p, {
+        n: 1, duration: .05,
+        onUpdate: () => { val.textContent = p.n > .35 ? f.v : ''; }
+      }, at + .105);
+      tl.fromTo(box, { backgroundColor: '#E6ECFF' }, { backgroundColor: '#FFFFFF', duration: .06, immediateRender: false }, at + .105);
+    } else {
+      const p = { n: 0 };
+      tl.to(p, {
+        n: f.v.length, duration: .07, snap: { n: 1 },
+        onUpdate: () => { val.textContent = f.v.slice(0, Math.round(p.n)); }
+      }, at + .105);
+    }
+  });
+
+  /* ---- submit ---- */
+  const submit = document.getElementById('btn-submit');
+  const AT_S = F0 + FIELDS.length * STEP + .06;
+  moveTo(submit, AT_S, .12, 20, -14);
+  tl.to(submit, { y: -2, duration: .05 }, AT_S + .13);           /* hover lift */
+  click(AT_S + .19);
+  tl.to(submit, { scale: .96, y: 1, duration: .035 }, AT_S + .19)
+    .to(submit, { scale: 1, y: 0, duration: .05 }, AT_S + .225);
+
+  /* ---- captured ---- */
+  push('#m-captured', AT_S + .34, .22, 22);
+  tl.to(cursor, { x: SCREEN_W + 60, y: SCREEN_H - 60, duration: .22 }, AT_S + .34);
+
+  /* pad to the pinned distance */
+  if (tl.duration() < T.total) tl.to({}, { duration: T.total - tl.duration() });
+
+  /* focus ring is derived from progress, so it is correct scrubbing either way */
+  function setFocus(u) {
+    let active = -1;
+    for (let i = 0; i < FIELDS.length; i++) {
+      const a = F0 + i * STEP;
+      if (u >= a + .085 && u < a + STEP + .02) active = i;
+    }
+    if (u >= AT_S + .1) active = -1;
+    document.querySelectorAll('.fbox').forEach((b, i) => b.classList.toggle('is-focus', i === active));
   }
 
-  /* The camera leaves the thread for an excursion, then returns. */
-  function leave(scene, at, dur) {
-    /* far enough that the thread clears the frame entirely — the camera has
-       genuinely left it, rather than parking it on top of the side rail */
-    tl.to(thread, { x: -1750, z: -700, duration: dur }, at)
-      .fromTo(scene, { z: -2400, autoAlpha: 0 },
-        { z: 0, autoAlpha: 1, duration: dur, immediateRender: false }, at)
-      .to(scene, { autoAlpha: 1, duration: dur * .22 }, at);
-  }
-  function comeBack(scene, at, dur) {
-    /* the excursion passes the camera as the thread returns to frame */
-    tl.to(scene, { z: 900, duration: dur }, at)
-      .to(scene, { autoAlpha: 0, duration: dur * .34 }, at + dur * .55)
-      .to(thread, { x: 0, z: 0, duration: dur }, at);
-  }
-
-  /* =====================================================================
-     ACT 1 — Contact
-  ===================================================================== */
-  (function act1() {
-    const a = AT[0];
-    push('.m-a1-ask', a + 0.02, 0.16);
-    push('.m-a1-t1', a + 0.20, 0.07, 18);
-    push('.m-a1-reply', a + 0.28, 0.15);
-    push('.m-a1-t2', a + 0.45, 0.07, 18);
-    push('.m-a1-form', a + 0.53, 0.18, 28);
-
-    /* One accent focus ring walks the form, and each value slides up into
-       its field as the ring lands on it — a form being completed. */
-    const ring = document.querySelector('.focus-ring');
-    const boxes = gsap.utils.toArray('.form-msg .fbox');
-    /* .ffield is statically positioned, so each .fbox already measures
-       against .form-msg — its nearest positioned ancestor, and the ring's
-       own containing block. */
-    const at = (b) => ({
-      x: b.offsetLeft, y: b.offsetTop,
-      w: b.offsetWidth, h: b.offsetHeight
-    });
-
-    let t = a + 0.72;
-    boxes.forEach((b, i) => {
-      const p = () => at(b);
-      if (i === 0) {
-        tl.set(ring, {
-          x: () => p().x, y: () => p().y,
-          width: () => p().w, height: () => p().h
-        }, t)
-          .fromTo(ring, { autoAlpha: 0, scale: 1.06 },
-            { autoAlpha: 1, scale: 1, duration: .035, immediateRender: false }, t);
-      } else {
-        tl.to(ring, {
-          x: () => p().x, y: () => p().y,
-          width: () => p().w, height: () => p().h,
-          duration: .052
-        }, t);
-      }
-      /* the value is entered */
-      tl.to(b.querySelector('.fval'), { y: 0, duration: .04 }, t + .026);
-      t += .055;
-    });
-
-    tl.to(ring, { autoAlpha: 0, scale: 1.1, duration: .035 }, t);
-
-    /* submit is pressed */
-    tl.to('.form-submit', { scale: .962, y: 2, duration: .03 }, t + .04)
-      .to('.form-submit', { scale: 1, y: 0, duration: .045 }, t + .07);
-
-    push('.m-a1-captured', a + 1.24, 0.13, 30);
-  })();
-
-  /* =====================================================================
-     ACT 2 — Matching.  Out of the chat, into the engine; the engine
-     visibly narrows the field; back into the chat with the winners.
-  ===================================================================== */
-  leave('.scene-engine', AT[1], SEG[1].len);
-
-  (function act2() {
-    const a = AT[2];
-
-    /* the three criteria land, one per elimination round */
-    gsap.set('.fchip', { autoAlpha: 0, y: 20 });
-    gsap.set('.engine-count', { autoAlpha: 0, y: 16 });
-    tl.to('.engine-count', { autoAlpha: 1, y: 0, duration: .1 }, a + .02);
-
-    /* a live counter — the field shrinking is the headline number */
-    const n = { v: 84 };
-    const numEl = document.getElementById('engine-num');
-    const unitEl = document.getElementById('engine-unit');
-    const REMAIN = [84, 41, 12, 3];
-
-    ROUND_SIZE.forEach((_, r) => {
-      const t = a + .22 + r * .42;
-      const tiles = gsap.utils.toArray('.tile[data-round="' + (r + 1) + '"]');
-
-      /* criterion snaps in and turns accent as it starts filtering */
-      tl.to('.fchip[data-w="' + (r + 1) + '"]', { autoAlpha: 1, y: 0, duration: .05 }, t)
-        .to('.fchip[data-w="' + (r + 1) + '"]', {
-          borderColor: '#2C5EFF', color: '#1E45CC',
-          backgroundColor: 'rgba(44,94,255,.07)', duration: .05
-        }, t + .05);
-
-      /* eliminated listings drop back into the depth of the grid */
-      tl.to(tiles, {
-        z: -520, scale: .86, y: 16, opacity: .13,
-        duration: .2, stagger: { each: .0022, from: 'random' }
-      }, t + .08);
-
-      /* the count runs down with them */
-      tl.to(n, {
-        v: REMAIN[r + 1], duration: .22, snap: { v: 1 },
-        onUpdate: () => { numEl.textContent = Math.round(n.v); }
-      }, t + .08);
-    });
-
-    /* the three survivors come forward, out of the plane of the grid */
-    const wins = WINNERS.map(i => '.tile:nth-child(' + (i + 1) + ')');
-    tl.to(wins, {
-      z: 210, scale: 1.5, duration: .3, stagger: .07
-    }, a + 1.30)
-      .to(wins, {
-        borderColor: '#2C5EFF',
-        boxShadow: '0 0 0 1.5px #2C5EFF, 0 10px 30px -6px rgba(44,94,255,.45)',
-        duration: .12, stagger: .07
-      }, a + 1.32)
-      .to(wins.map(w => w + ' .tile-score'), {
-        y: 0, opacity: 1, duration: .1, stagger: .07
-      }, a + 1.40);
-
-    tl.call(() => { unitEl.textContent = 'MATCHES'; }, null, a + 1.34)
-      .call(() => { unitEl.textContent = 'ACTIVE LISTINGS'; }, null, a + 1.32);
-
-    /* back into the chat — the engine passes the camera */
-    comeBack('.scene-engine', AT[3], SEG[3].len);
-
-    /* the winners arrive as messages */
-    const b = AT[4];
-    push('.m-a2-l1', b + .02, .26, 34);
-    push('.m-a2-l2', b + .34, .26, 34);
-    push('.m-a2-l3', b + .66, .26, 34);
-  })();
-
-  /* =====================================================================
-     ACT 3 — She picks one, and the handoff fires.
-  ===================================================================== */
-  (function act3() {
-    /* she scrolls back to the Achrafieh listing and taps it — the thread
-       travels back down the conversation, which is what the visitor sees */
-    const a = AT[5];
-    tl.to(inner, { y: () => threadY('.m-a2-l1', 34), duration: .26 }, a + .02);
-
-    const btn = '#btn-interest-1';
-    tl.to(btn, { scale: .955, duration: .035 }, a + .32)
-      .to(btn, { scale: 1, duration: .05 }, a + .365)
-      .to(btn, {
-        backgroundColor: '#2C5EFF', borderColor: '#2C5EFF', color: '#FAF9F7',
-        boxShadow: '0 2px 6px rgba(44,94,255,.10), 0 18px 40px -12px rgba(44,94,255,.22)',
-        duration: .07
-      }, a + .34);
-
-    /* the camera leaves for the assignment */
-    leave('.scene-assign', AT[6], SEG[6].len);
-
-    const b = AT[7];
-    /* the two people arrive from opposite sides, with real depth */
-    tl.fromTo('.agent-admin', { autoAlpha: 0, x: -180, z: -700 },
-      { autoAlpha: 1, x: 0, z: 0, duration: .22, immediateRender: false }, b + .02)
-      .fromTo('.agent-karim', { autoAlpha: 0, x: 180, z: -700 },
-        { autoAlpha: 1, x: 0, z: 0, duration: .22, immediateRender: false }, b + .08);
-
-    /* the assignment travels the wire, left to right */
-    const beamW = () => document.querySelector('.beam').offsetWidth;
-    tl.to('.beam-head', { scale: 1, duration: .04 }, b + .34)
-      .to('.beam-fill', { scaleX: 1, duration: .30 }, b + .34)
-      .to('.beam-head', { x: () => beamW(), duration: .30 }, b + .34)
-      .to('.beam-chip', { autoAlpha: 1, y: 0, duration: .07 }, b + .40)
-      /* it lands on Karim */
-      .to('.beam-head', { scale: 2.6, autoAlpha: 0, duration: .09 }, b + .64)
-      .to('.agent-karim', { scale: 1.035, duration: .06 }, b + .64)
-      .to('.agent-karim', { scale: 1, duration: .10 }, b + .70);
-
-    /* and the ping drops out of his card */
-    tl.to('.assign-stem', { scaleY: 1, duration: .10 }, b + .74)
-      .fromTo('.notify-card', { autoAlpha: 0, y: -40, z: -520 },
-        { autoAlpha: 1, y: 0, z: 0, duration: .22, immediateRender: false }, b + .82);
-  })();
-
-  /* =====================================================================
-     ACT 4 — Booking.  The calendar is sent to her in the thread, she
-     picks a slot there, and only then do we cut to the agent.
-  ===================================================================== */
-  (function act4() {
-    comeBack('.scene-assign', AT[8], SEG[8].len);
-
-    const a = AT[9];
-    push('.m-a4-cal', a + .02, .24, 34);
-
-    /* she presses Fri 11:30 — the slot takes the press, then commits */
-    tl.to('#cal-fri', { scale: .93, duration: .04 }, a + .36)
-      .to('#cal-fri', { scale: 1, duration: .08 }, a + .40)
-      .to('#cal-fri', {
-        backgroundColor: '#2C5EFF', borderColor: '#2C5EFF', color: '#FAF9F7',
-        boxShadow: '0 2px 6px rgba(44,94,255,.14), 0 14px 30px -8px rgba(44,94,255,.4)',
-        duration: .09
-      }, a + .38)
-      /* the options she didn't take step back out of contention */
-      .to('.cal-slot:not(.cal-picked)', {
-        opacity: .3, scale: .97, duration: .13, stagger: .016
-      }, a + .46);
-
-    /* over to the agent's side */
-    leave('.scene-agent', AT[10], SEG[10].len);
-
-    const b = AT[11];
-    tl.fromTo('.scene-agent .agent-mini', { autoAlpha: 0, y: -26 },
-      { autoAlpha: 1, y: 0, duration: .10, immediateRender: false }, b + .02)
-      .fromTo('.booking-card', { autoAlpha: 0, y: 100, z: -640 },
-        { autoAlpha: 1, y: 0, z: 0, duration: .26, immediateRender: false }, b + .05)
-      /* he confirms with a click */
-      .to('#btn-confirm', { scale: .95, duration: .035 }, b + .38)
-      .to('#btn-confirm', { scale: 1, duration: .055 }, b + .415)
-      .to('.booking-actions .btn-quiet', { opacity: .3, duration: .07 }, b + .40);
-
-    /* and it lands back in her thread */
-    comeBack('.scene-agent', AT[12], SEG[12].len);
-    push('.m-a4-confirmed', AT[12] + .24, .18, 30);
-  })();
-
-  /* =====================================================================
-     ACT 5 — Operation.  The camera pulls all the way back; the page
-     inverts to ink, and the thread we have followed for the whole
-     sequence compresses into one highlighted card on the board.
-  ===================================================================== */
-  (function act5() {
-    const a = AT[13], dur = SEG[13].len;
-
-    /* offset of an element relative to an ancestor, through any
-       transformed offsetParents in between */
-    const offsetIn = (el, root) => {
-      let x = 0, y = 0, n = el;
-      while (n && n !== root) { x += n.offsetLeft; y += n.offsetTop; n = n.offsetParent; }
-      return { x: x, y: y };
-    };
-    const slotWorld = () => {
-      const scene = document.querySelector('.scene-ops');
-      const o = offsetIn(document.getElementById('lead-slot'), scene);
-      return {
-        x: parseFloat(getComputedStyle(scene).marginLeft) + o.x,
-        y: parseFloat(getComputedStyle(scene).marginTop) + o.y
-      };
-    };
-
-    /* the board arrives from deep space as the room goes dark */
-    tl.fromTo('.scene-ops', { z: -2600, autoAlpha: 0 },
-      { z: 0, autoAlpha: 1, duration: dur * .75, immediateRender: false }, a)
-      .to('.scene-ops', { autoAlpha: 1, duration: dur * .18 }, a);
-
-    /* the one sanctioned background crossfade: Paper → Ink. Kept short so
-       the room is already dark while the thread is still travelling —
-       a long linear crossfade just parks the page in muddy mid-grey. */
-    tl.to('body', { backgroundColor: '#1A1917', duration: dur * .5 }, a)
-      .to('.site-header', {
-        backgroundColor: 'rgba(26,25,23,.82)', borderBottomColor: '#3C3A37', duration: dur * .5
-      }, a)
-      .to('.wordmark', { color: '#FAF9F7', duration: dur * .5 }, a);
-
-    /* the thread flies to the board and compresses into its card.
-       Scale comes from the real card slot, measured at refresh — the
-       column width changes with the viewport. */
-    const slot = document.getElementById('lead-slot');
-    const scaleTo = () => slot.offsetWidth / thread.offsetWidth;
-    tl.set(thread, { transformOrigin: 'top left' }, a)
-      .to(thread, {
-        x: () => slotWorld().x + 308,
-        y: () => slotWorld().y + 312,
-        scale: scaleTo,
-        height: () => slot.offsetHeight / scaleTo(),
-        duration: dur
-      }, a)
-      .to('.thread-face', { opacity: 1, duration: dur * .45 }, a + dur * .35);
-
-    /* the rest of the operation fills in around it */
-    const b = AT[14];
-    tl.fromTo('.kcol', { autoAlpha: 0, y: 70, z: -420 },
-      { autoAlpha: 1, y: 0, z: 0, duration: .2, stagger: .05, immediateRender: false }, b - dur * .5)
-      .fromTo('.kcol .kcard:not(.lead-slot)', { autoAlpha: 0, y: 26 },
-        { autoAlpha: 1, y: 0, duration: .12, stagger: .008, immediateRender: false }, b + .06)
-      .fromTo('.ledger', { autoAlpha: 0, y: 90, z: -520 },
-        { autoAlpha: 1, y: 0, z: 0, duration: .26, immediateRender: false }, b + .62);
-    /* the remainder of the segment is the deliberate hold before the CTA */
-  })();
-
-  /* Pad the timeline so its duration matches the pinned scroll distance */
-  tl.to({}, { duration: Math.max(0.01, total - tl.duration()) });
-
-  /* --- dev frame capture: ?frame=0.42 --- */
-  const fp = new URLSearchParams(location.search).get('frame');
-  if (fp !== null) {
+  /* ---- dev frame capture ---- */
+  if (FRAME !== null) {
     const apply = () => {
-      document.body.classList.add('framemode', 'rail-on');
+      document.body.classList.add('framemode');
       ScrollTrigger.getAll().forEach(t => t.disable(true));
-      fitStage();
-      const p = parseFloat(fp);
+      fitMachine();
+      const p = parseFloat(FRAME);
       tl.pause().progress(0).progress(p);
-      const u = p * total;
-      let idx = 0;
-      for (let i = 0; i < SEG.length; i++) if (u >= AT[i]) idx = SEG[i].r;
-      rail.ref.textContent = '';
-      setRail(idx);
+      setFocus(p * T.total);
       window.scrollTo(0, 0);
     };
-    (document.fonts ? document.fonts.ready : Promise.resolve()).then(() =>
-      requestAnimationFrame(() => setTimeout(apply, 60)));
+    (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => setTimeout(apply, 80));
   }
 
-  return () => ScrollTrigger.removeEventListener('refreshInit', fitStage);
+  return () => ScrollTrigger.removeEventListener('refreshInit', fitMachine);
 });
 
-/* ===========================================================================
+/* ---------------------------------------------------------------------------
    Reduced motion — same content and order, no camera, nothing hidden
-=========================================================================== */
+--------------------------------------------------------------------------- */
 mm.add('(prefers-reduced-motion: reduce)', () => {
-  document.body.classList.add('reduced', 'rail-on');
-  const leadSlot = document.getElementById('lead-slot');
-  if (leadSlot) { leadSlot.style.visibility = 'visible'; leadSlot.classList.add('kcard-lead'); }
-
-  const scenes = ['#thread', '.scene-engine', '.scene-assign', '.scene-agent', '.scene-ops'];
-  scenes.forEach((s, i) => {
-    ScrollTrigger.create({
-      trigger: s, start: 'top 60%',
-      onEnter: () => setRail(Math.min(i, 4)),
-      onEnterBack: () => setRail(Math.min(i, 4))
-    });
+  document.body.classList.add('reduced');
+  buildCaption(CAPTION_INBOX);
+  FIELDS.forEach((f, i) => {
+    const el = document.querySelector('.ff[data-f="' + i + '"] .fval');
+    if (el) el.textContent = f.v;
   });
-  setRail(0);
-  return () => document.body.classList.remove('reduced', 'rail-on');
+  const t = document.querySelector('.tab.is-active');
+  gsap.set(underline, { x: t.offsetLeft, width: t.offsetWidth });
+  return () => document.body.classList.remove('reduced');
 });
 
 if (document.fonts && document.fonts.ready) {

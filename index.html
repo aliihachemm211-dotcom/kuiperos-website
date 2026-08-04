@@ -7,7 +7,7 @@
   <meta name="description" content="kuiperOS qualifies, matches, and hands off every inquiry through WhatsApp — so no lead waits, and no agent has to open a dashboard.">
   <meta property="og:title" content="kuiperOS — The Operating System for Modern Real Estate">
   <meta property="og:description" content="kuiper does everything up to the decision. The decision stays yours.">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20fill='%23FAF9F7'/%3E%3Ctext%20x='32'%20y='46'%20font-family='Clash%20Display,Georgia,serif'%20font-size='44'%20font-weight='600'%20fill='%231A1917'%20text-anchor='middle'%3Ek%3C/text%3E%3C/svg%3E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20fill='%23FAF9F7'/%3E%3Ctext%20x='32'%20y='46'%20font-family='Georgia,serif'%20font-size='44'%20font-weight='700'%20fill='%231A1917'%20text-anchor='middle'%3Ek%3C/text%3E%3C/svg%3E">
   <link rel="preload" href="Fonts/ClashDisplay-Semibold.otf" as="font" type="font/otf" crossorigin>
   <link rel="preload" href="Fonts/GeneralSans-Regular.otf" as="font" type="font/otf" crossorigin>
   <link rel="preload" href="Fonts/GeneralSans-Bold.otf" as="font" type="font/otf" crossorigin>
@@ -16,208 +16,137 @@
 </head>
 <body>
 
-  <header class="site-header" id="site-header">
+  <header class="site-header">
     <span class="wordmark">kuiper.</span>
     <button class="btn-cta" type="button">Request early access</button>
   </header>
 
-  <aside class="rail" id="rail" aria-hidden="true">
-    <div class="rail-ref" id="rail-ref">THREAD—0417</div>
-    <div class="rail-step" id="rail-step">01 / 05</div>
-    <div class="rail-caption" id="rail-caption">
-      <p>A message arrives at&nbsp;10:41am.</p>
-      <p>In thirty seconds, the lead is qualified — not just logged.</p>
-    </div>
-  </aside>
-
-  <div class="cropmarks" id="cropmarks" aria-hidden="true">
-    <span class="mark mark-tl"></span>
-    <span class="mark mark-tr"></span>
-    <span class="mark mark-bl"></span>
-    <span class="mark mark-br"></span>
-  </div>
-
   <main>
 
+    <!-- ===================== OPENER ===================== -->
     <section class="opener" id="opener">
       <div class="opener-inner">
         <h1 class="opener-headline">The Operating System for&nbsp;Modern Real&nbsp;Estate</h1>
-        <p class="opener-tension-1">Every minute of silence is a lead deciding on someone else.</p>
-        <p class="opener-tension-2">Hours pass. Leads go cold. Somewhere in the chaos, you’re losing deals you never even saw.</p>
+        <p class="opener-tension">Every minute of silence is a lead deciding on someone else.</p>
+        <p class="opener-sub">Hours pass. Leads go cold. Somewhere in the chaos, you’re losing deals you never even saw.</p>
         <p class="opener-pivot">Here’s the same lead. Handled differently.</p>
       </div>
     </section>
 
+    <!-- ===================== THE SEQUENCE ===================== -->
     <section class="sequence" id="sequence">
-      <div class="act-stage">
-        <div class="camera">
+      <div class="stage" id="stage">
 
-          <!-- ===== THE THREAD — the one continuous environment ===== -->
-          <div class="thread" id="thread">
-            <div class="thread-face" aria-hidden="true">
-              <span class="tf-name">RANIA K.</span>
-              <span class="tf-ref">THREAD-0417</span>
-            </div>
-            <div class="thread-inner" id="thread-inner">
+        <!-- ambient light behind the machine -->
+        <div class="ambient" aria-hidden="true"></div>
 
-              <!-- Act 1 -->
-              <div class="msg lead m-a1-ask">
-                <p>I am looking for a 2 bedroom in Achrafieh, anything available?</p>
-                <span class="msg-meta">10:41:00</span>
+        <!-- ---------- the laptop ---------- -->
+        <div class="machine" id="machine">
+          <div class="bezel">
+            <span class="lens" aria-hidden="true"></span>
+            <div class="screen" id="screen">
+
+              <!-- app chrome -->
+              <div class="appbar">
+                <span class="app-mark">kuiper.</span>
+                <nav class="tabs" id="tabs">
+                  <button class="tab is-active" data-tab="inbox" type="button" tabindex="-1">Inbox</button>
+                  <button class="tab" data-tab="matching" type="button" tabindex="-1">Matching</button>
+                  <button class="tab" data-tab="pipeline" type="button" tabindex="-1">Pipeline</button>
+                  <button class="tab" data-tab="agent" type="button" tabindex="-1">Agent Desk</button>
+                  <button class="tab" data-tab="control" type="button" tabindex="-1">Control Room</button>
+                  <span class="tab-underline" id="tab-underline" aria-hidden="true"></span>
+                </nav>
+                <span class="app-user" aria-hidden="true"><i>A</i></span>
               </div>
 
-              <div class="tickline m-a1-t1"><span class="tick-bar"></span><span class="tick-time">+00:03s</span></div>
+              <!-- ---------- INBOX PANEL ---------- -->
+              <div class="panel panel-inbox" id="panel-inbox">
 
-              <div class="msg sys m-a1-reply">
-                <p>Thanks for reaching out! To find you the best match, please fill the form below — it’ll take a couple of seconds.</p>
-                <span class="msg-meta">10:41:03&ensp;·&ensp;<em>AUTO</em></span>
+                <!-- conversations list (GHL Conversations convention) -->
+                <aside class="convo-list">
+                  <div class="convo-head">
+                    <span class="convo-title">Conversations</span>
+                    <span class="convo-count">43</span>
+                  </div>
+                  <div class="convo-row is-active">
+                    <span class="convo-avatar">R</span>
+                    <span class="convo-body">
+                      <span class="convo-name">Rania K.</span>
+                      <span class="convo-snip">I am looking for a 2 bedroom…</span>
+                    </span>
+                    <span class="convo-meta"><span class="convo-time">10:41</span><span class="convo-dot"></span></span>
+                  </div>
+                  <div class="convo-row is-redacted" aria-hidden="true"><span class="convo-avatar"></span><span class="convo-body"><span class="rb rb-a"></span><span class="rb rb-b"></span></span></div>
+                  <div class="convo-row is-redacted" aria-hidden="true"><span class="convo-avatar"></span><span class="convo-body"><span class="rb rb-c"></span><span class="rb rb-a"></span></span></div>
+                  <div class="convo-row is-redacted" aria-hidden="true"><span class="convo-avatar"></span><span class="convo-body"><span class="rb rb-b"></span><span class="rb rb-c"></span></span></div>
+                  <div class="convo-row is-redacted" aria-hidden="true"><span class="convo-avatar"></span><span class="convo-body"><span class="rb rb-a"></span><span class="rb rb-b"></span></span></div>
+                </aside>
+
+                <!-- active thread -->
+                <section class="thread-pane">
+                  <header class="thread-head">
+                    <span class="th-avatar">R</span>
+                    <span class="th-id">
+                      <span class="th-name">Rania K.</span>
+                      <span class="th-num">+961 3 xxx xxx</span>
+                    </span>
+                    <span class="th-channel">WHATSAPP</span>
+                  </header>
+
+                  <div class="thread" id="thread">
+                    <div class="thread-inner" id="thread-inner">
+
+                      <div class="msg in" id="m-ask">
+                        <p>I am looking for a 2 bedroom in Achrafieh, anything available?</p>
+                        <span class="msg-meta">10:41:00</span>
+                      </div>
+
+                      <div class="msg out" id="m-reply">
+                        <p>Thanks for reaching out! Just a few quick details and we’ll find your match.</p>
+                        <span class="msg-meta">10:41:03&ensp;·&ensp;AUTO<i class="read">read</i></span>
+                      </div>
+
+                      <div class="msg out form-msg" id="m-form">
+                        <div class="form-head">QUALIFYING FORM</div>
+                        <div class="ff" data-f="0"><label>Name</label><div class="fbox"><span class="fval"></span><span class="caret"></span></div></div>
+                        <div class="ff" data-f="1"><label>Mobile Number</label><div class="fbox"><span class="fval"></span><span class="caret"></span></div></div>
+                        <div class="ff" data-f="2"><label>Area</label><div class="fbox"><span class="fval"></span><span class="caret"></span></div></div>
+                        <div class="ff half" data-f="3"><label>Bedrooms</label><div class="fbox"><span class="fval"></span><span class="caret"></span></div></div>
+                        <div class="ff half" data-f="4"><label>Budget</label><div class="fbox"><span class="fval"></span><span class="caret"></span></div></div>
+                        <div class="ff" data-f="5"><label>Timeline</label><div class="fbox is-select"><span class="fval"></span><span class="chev"></span></div></div>
+                        <button class="btn-submit" id="btn-submit" type="button" tabindex="-1">Submit</button>
+                      </div>
+
+                      <div class="stamp" id="m-captured"><span class="stamp-dot"></span>CAPTURED&ensp;·&ensp;CRM-0417</div>
+
+                    </div>
+                  </div>
+
+                  <footer class="composer" aria-hidden="true">
+                    <span class="composer-field">Message</span>
+                    <span class="composer-send"></span>
+                  </footer>
+                </section>
               </div>
 
-              <div class="tickline m-a1-t2"><span class="tick-bar"></span><span class="tick-time">+00:30s</span></div>
-
-              <div class="msg sys form-msg m-a1-form">
-                <div class="form-head">QUALIFYING FORM — 04</div>
-                <div class="ffield" data-f="1"><label>NAME</label><div class="fbox"><span class="fval">Rania K.</span></div></div>
-                <div class="ffield" data-f="2"><label>MOBILE NUMBER</label><div class="fbox"><span class="fval">+961 3 xxx xxx</span></div></div>
-                <div class="ffield" data-f="3"><label>AREA</label><div class="fbox"><span class="fval">Achrafieh, Beirut</span></div></div>
-                <div class="ffield ffield-half" data-f="4"><label>BEDROOMS</label><div class="fbox"><span class="fval">2</span></div></div>
-                <div class="ffield ffield-half" data-f="5"><label>BUDGET</label><div class="fbox"><span class="fval">$180,000</span></div></div>
-                <div class="ffield" data-f="6"><label>TIMELINE</label><div class="fbox fbox-select"><span class="fval">Ready now</span><span class="fcaret"></span></div></div>
-                <span class="focus-ring" aria-hidden="true"></span>
-                <button class="btn-fill form-submit" type="button" tabindex="-1">Submit</button>
+              <!-- cursor lives above the app, inside the screen -->
+              <div class="cursor" id="cursor" aria-hidden="true">
+                <svg viewBox="0 0 12 18" width="19" height="28"><path d="M1 1.2 L1 15.2 L4.6 11.9 L7 17 L9.4 15.9 L7 11 L11 10.8 Z" fill="#fff" stroke="#1A1917" stroke-width="1.1" stroke-linejoin="round"/></svg>
+                <span class="click-ring" id="click-ring"></span>
               </div>
 
-              <div class="chip m-a1-captured"><span class="chip-dot"></span>CAPTURED&ensp;·&ensp;CRM-0417</div>
-
-              <!-- Act 2 — the three matches arrive in the thread -->
-              <div class="msg sys listing-msg m-a2-l1">
-                <div class="listing-photo"><img src="Assets/Listing 1.jpg" alt="Achrafieh two-bed interior with arched green-framed windows"></div>
-                <div class="listing-meta">
-                  <span class="listing-ref">ACHRAFIEH-014</span>
-                  <p class="listing-title">2BR · Achrafieh</p>
-                  <p class="listing-desc">95m² · 2nd floor · balcony</p>
-                </div>
-                <button class="btn-outline btn-interest" id="btn-interest-1" type="button" tabindex="-1">I am interested in this Property</button>
-              </div>
-
-              <div class="msg sys listing-msg m-a2-l2">
-                <div class="listing-photo"><img src="Assets/Listing 2.jpg" alt="Dbayeh waterfront penthouse with floor-to-ceiling glass"></div>
-                <div class="listing-meta">
-                  <span class="listing-ref">DBAYEH-027</span>
-                  <p class="listing-title">2BR · Dbayeh</p>
-                  <p class="listing-desc">132m² · waterfront · floor-to-ceiling glass</p>
-                </div>
-                <button class="btn-outline btn-interest" type="button" tabindex="-1">I am interested in this Property</button>
-              </div>
-
-              <div class="msg sys listing-msg m-a2-l3">
-                <div class="listing-photo"><img src="Assets/Listing 3.jpg" alt="Jounieh family apartment with retro furniture and sheer curtains"></div>
-                <div class="listing-meta">
-                  <span class="listing-ref">JOUNIEH-008</span>
-                  <p class="listing-title">2BR · Jounieh</p>
-                  <p class="listing-desc">96m² · top floor · morning light</p>
-                </div>
-                <button class="btn-outline btn-interest" type="button" tabindex="-1">I am interested in this Property</button>
-              </div>
-
-              <!-- Act 4 — the calendar arrives in the thread -->
-              <div class="msg sys cal-msg m-a4-cal">
-                <div class="form-head">AVAILABLE VIEWING SLOTS</div>
-                <div class="cal-grid">
-                  <div class="cal-slot">Thu 10:00</div>
-                  <div class="cal-slot">Thu 14:30</div>
-                  <div class="cal-slot">Fri 09:00</div>
-                  <div class="cal-slot cal-picked" id="cal-fri">Fri 11:30</div>
-                  <div class="cal-slot">Sat 10:00</div>
-                  <div class="cal-slot">Sat 15:00</div>
-                </div>
-              </div>
-
-              <div class="chip m-a4-confirmed"><span class="chip-dot"></span>CONFIRMED&ensp;·&ensp;FRI 11:30</div>
-
-            </div>
-          </div>
-
-          <!-- ===== EXCURSION: the matching engine ===== -->
-          <div class="scene scene-engine" data-station="1">
-            <div class="engine-head">
-              <div class="engine-title">MATCHING AGAINST ACTIVE LISTINGS</div>
-              <div class="engine-count"><span class="engine-num" id="engine-num">84</span><span class="engine-unit" id="engine-unit">ACTIVE LISTINGS</span></div>
-            </div>
-            <div class="engine-filters">
-              <span class="fchip" data-w="1">AREA&ensp;·&ensp;ACHRAFIEH + COAST</span>
-              <span class="fchip" data-w="2">BEDROOMS&ensp;·&ensp;2</span>
-              <span class="fchip" data-w="3">BUDGET&ensp;·&ensp;≤ $180K</span>
-            </div>
-            <div class="engine-grid" id="engine-grid"><!-- tiles injected by JS --></div>
-          </div>
-
-          <!-- ===== EXCURSION: assignment ===== -->
-          <div class="scene scene-assign" data-station="3">
-            <div class="assign-row">
-              <div class="agent-card agent-admin">
-                <div class="agent-disc">A</div>
-                <div class="agent-name">Admin</div>
-                <div class="agent-role">COORDINATOR</div>
-              </div>
-              <div class="beam">
-                <span class="beam-chip">ASSIGNED&ensp;·&ensp;0.4s</span>
-                <span class="beam-track"></span>
-                <span class="beam-fill"></span>
-                <span class="beam-head"></span>
-              </div>
-              <div class="agent-card agent-karim">
-                <div class="agent-disc disc-accent">K</div>
-                <div class="agent-name">Karim</div>
-                <div class="agent-role"><span class="live-dot"></span>SENIOR AGENT · ONLINE</div>
-              </div>
-            </div>
-            <div class="assign-stem"></div>
-            <div class="notify-card">
-              <div class="card-kicker">NEW LEAD&ensp;·&ensp;RANIA K.</div>
-              <p class="notify-main">Achrafieh · 2BR · $180,000 budget</p>
-              <p class="notify-sub">WhatsApp: +961 3 xxx xxx</p>
-              <button class="btn-fill" type="button" tabindex="-1">Confirm Contact</button>
             </div>
           </div>
-
-          <!-- ===== EXCURSION: the agent's desk (act 4 confirmation) ===== -->
-          <div class="scene scene-agent" data-station="5">
-            <div class="agent-mini">
-              <span class="agent-disc disc-accent sm">K</span>
-              <span class="agent-mini-name">Karim</span>
-              <span class="agent-mini-role">AGENT VIEW</span>
-            </div>
-            <div class="booking-card">
-              <div class="card-kicker">VIEWING REQUEST&ensp;·&ensp;FRI 11:30</div>
-              <p class="booking-main">Rania K. wants to view <strong>Achrafieh-014</strong></p>
-              <div class="booking-actions">
-                <button class="btn-fill" id="btn-confirm" type="button" tabindex="-1">Confirm</button>
-                <button class="btn-outline btn-quiet" type="button" tabindex="-1">Propose new time</button>
-                <button class="btn-outline btn-quiet" type="button" tabindex="-1">Reject</button>
-              </div>
-            </div>
-          </div>
-
-          <!-- ===== EXCURSION: the control room ===== -->
-          <div class="scene scene-ops" data-station="6">
-            <div class="kanban" id="kanban"><!-- columns injected by JS --></div>
-            <div class="ledger">
-              <div class="card-kicker">WEEKLY LEDGER</div>
-              <div class="ledger-stats">
-                <div class="stat"><span class="stat-num">32</span><span class="stat-label">LEADS ASSIGNED</span></div>
-                <div class="stat"><span class="stat-num">7</span><span class="stat-label">VIEWINGS BOOKED</span></div>
-                <div class="stat"><span class="stat-num">18</span><span class="stat-label">CONTACTED</span></div>
-              </div>
-              <div class="ledger-rows">
-                <div class="ledger-row"><span class="ledger-name">Karim</span><span class="ledger-stat">6 contacted · 2 confirmed</span></div>
-                <div class="ledger-row"><span class="ledger-name">Dana</span><span class="ledger-stat">4 contacted · 3 confirmed</span></div>
-                <div class="ledger-row"><span class="ledger-name">Sami</span><span class="ledger-stat">5 contacted · 1 confirmed</span></div>
-              </div>
-            </div>
-          </div>
-
+          <div class="chin" aria-hidden="true"></div>
         </div>
+
+        <!-- ---------- narration caption, outside the frame ---------- -->
+        <div class="narration" id="narration">
+          <span class="narration-tab" id="narration-tab">INBOX</span>
+          <p class="narration-line" id="narration-line"></p>
+        </div>
+
       </div>
     </section>
 
