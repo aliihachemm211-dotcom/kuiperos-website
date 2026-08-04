@@ -21,7 +21,6 @@
     <button class="btn-cta" type="button">Request early access</button>
   </header>
 
-  <!-- Fixed overlays: side rail + crop marks (shown during the act sequence) -->
   <aside class="rail" id="rail" aria-hidden="true">
     <div class="rail-ref" id="rail-ref">THREAD—0417</div>
     <div class="rail-step" id="rail-step">01 / 05</div>
@@ -40,159 +39,179 @@
 
   <main>
 
-    <!-- Opener: three-beat progression, text only -->
     <section class="opener" id="opener">
       <div class="opener-inner">
-        <h1 class="opener-headline">The Operating System for&nbsp;Modern Real Estate</h1>
+        <h1 class="opener-headline">The Operating System for&nbsp;Modern Real&nbsp;Estate</h1>
         <p class="opener-tension-1">Every minute of silence is a lead deciding on someone else.</p>
         <p class="opener-tension-2">Hours pass. Leads go cold. Somewhere in the chaos, you’re losing deals you never even saw.</p>
         <p class="opener-pivot">Here’s the same lead. Handled differently.</p>
       </div>
     </section>
 
-    <!-- The 5-act sequence: one pinned stage, one camera, acts at z-stations.
-         The anchor bubble lives at camera level so it can travel between acts. -->
     <section class="sequence" id="sequence">
       <div class="act-stage">
         <div class="camera">
 
-          <div class="bubble anchor" id="anchor">
-            <div class="anchor-msg">
-              <p>I am looking for a 2 bedroom in Achrafieh, anything available?</p>
-              <span class="bubble-meta">10:41:00</span>
-            </div>
-            <div class="anchor-face" aria-hidden="true">RANIA K.<br>THREAD-0417</div>
-          </div>
+          <!-- ===== THE THREAD — the one continuous environment ===== -->
+          <div class="thread" id="thread">
+            <div class="thread-inner" id="thread-inner">
 
-        <div class="scene scene-1" data-act="1">
+              <!-- Act 1 -->
+              <div class="msg lead m-a1-ask">
+                <p>I am looking for a 2 bedroom in Achrafieh, anything available?</p>
+                <span class="msg-meta">10:41:00</span>
+              </div>
 
-          <div class="anchor-slot" id="slot-1" aria-hidden="true"></div>
+              <div class="tickline m-a1-t1"><span class="tick-bar"></span><span class="tick-time">+00:03s</span></div>
 
-          <div class="tick tick-1">
-            <span class="tick-line"></span>
-            <span class="tick-label">+00:03s</span>
-          </div>
+              <div class="msg sys m-a1-reply">
+                <p>Thanks for reaching out! To find you the best match, please fill the form below — it’ll take a couple of seconds.</p>
+                <span class="msg-meta">10:41:03&ensp;·&ensp;<em>AUTO</em></span>
+              </div>
 
-          <div class="bubble auto-reply">
-            <p>Thanks for reaching out! To find you the best match, please fill the form below — it’ll take a couple of seconds.</p>
-            <span class="bubble-meta">10:41:03&ensp;·&ensp;<em>AUTO</em></span>
-          </div>
+              <div class="tickline m-a1-t2"><span class="tick-bar"></span><span class="tick-time">+00:30s</span></div>
 
-          <div class="tick tick-2">
-            <span class="tick-line"></span>
-            <span class="tick-label">+00:30s</span>
-          </div>
+              <div class="msg sys form-msg m-a1-form">
+                <div class="form-head">QUALIFYING FORM — 04</div>
+                <div class="ffield" data-f="1"><label>NAME</label><div class="fbox"><span class="fval">Rania K.</span></div></div>
+                <div class="ffield" data-f="2"><label>MOBILE NUMBER</label><div class="fbox"><span class="fval">+961 3 xxx xxx</span></div></div>
+                <div class="ffield" data-f="3"><label>AREA</label><div class="fbox"><span class="fval">Achrafieh, Beirut</span></div></div>
+                <div class="ffield ffield-half" data-f="4"><label>BEDROOMS</label><div class="fbox"><span class="fval">2</span></div></div>
+                <div class="ffield ffield-half" data-f="5"><label>BUDGET</label><div class="fbox"><span class="fval">$180,000</span></div></div>
+                <div class="ffield" data-f="6"><label>TIMELINE</label><div class="fbox fbox-select"><span class="fval">Ready now</span><span class="fcaret"></span></div></div>
+                <span class="focus-ring" aria-hidden="true"></span>
+                <button class="btn-fill form-submit" type="button" tabindex="-1">Submit</button>
+              </div>
 
-          <div class="form-card">
-            <div class="form-title">QUALIFYING FORM — 04</div>
-            <div class="form-rows">
-              <div class="form-row">Name — Rania K.</div>
-              <div class="form-row">Mobile Number — +961 3 xxx xxx</div>
-              <div class="form-row">Area — Achrafieh, Beirut</div>
-              <div class="form-row">Bedrooms — 2</div>
-              <div class="form-row">Budget — $180,000</div>
-              <div class="form-row">Timeline — Ready now</div>
-            </div>
-            <button class="btn-submit" type="button" tabindex="-1">Submit</button>
-          </div>
+              <div class="chip m-a1-captured"><span class="chip-dot"></span>CAPTURED&ensp;·&ensp;CRM-0417</div>
 
-          <div class="capture-stamp">CAPTURED&ensp;·&ensp;CRM-0417</div>
+              <!-- Act 2 — the three matches arrive in the thread -->
+              <div class="msg sys listing-msg m-a2-l1">
+                <div class="listing-photo"><img src="Assets/Listing 1.jpg" alt="Achrafieh two-bed interior with arched green-framed windows"></div>
+                <div class="listing-meta">
+                  <span class="listing-ref">ACHRAFIEH-014</span>
+                  <p class="listing-title">2BR · Achrafieh</p>
+                  <p class="listing-desc">95m² · 2nd floor · balcony</p>
+                </div>
+                <button class="btn-outline btn-interest" id="btn-interest-1" type="button" tabindex="-1">I am interested in this Property</button>
+              </div>
 
-        </div>
+              <div class="msg sys listing-msg m-a2-l2">
+                <div class="listing-photo"><img src="Assets/Listing 2.jpg" alt="Dbayeh waterfront penthouse with floor-to-ceiling glass"></div>
+                <div class="listing-meta">
+                  <span class="listing-ref">DBAYEH-027</span>
+                  <p class="listing-title">2BR · Dbayeh</p>
+                  <p class="listing-desc">132m² · waterfront · floor-to-ceiling glass</p>
+                </div>
+                <button class="btn-outline btn-interest" type="button" tabindex="-1">I am interested in this Property</button>
+              </div>
 
-        <div class="scene scene-2" data-act="2">
-          <div class="anchor-slot" id="slot-2" aria-hidden="true"></div>
-          <div class="grid-label">MATCHING AGAINST ACTIVE LISTINGS</div>
-          <div class="match-grid">
-            <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
-            <div class="cell"></div><div class="cell"></div><div class="cell match"></div><div class="cell match"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
-            <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell match"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
-            <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
-          </div>
-          <div class="listing-card">
-            <div class="listing-photo">
-              <img src="Assets/Listing 1.jpg" alt="Achrafieh two-bed interior with arched green-framed windows">
-              <span class="listing-ref">ACHRAFIEH-014</span>
-            </div>
-            <div class="listing-body">
-              <p>2BR · Achrafieh</p>
-              <p>95m² · 2nd floor · balcony</p>
-              <button class="btn-outline" type="button" tabindex="-1">I am interested in this Property</button>
-            </div>
-          </div>
-        </div>
+              <div class="msg sys listing-msg m-a2-l3">
+                <div class="listing-photo"><img src="Assets/Listing 3.jpg" alt="Jounieh family apartment with retro furniture and sheer curtains"></div>
+                <div class="listing-meta">
+                  <span class="listing-ref">JOUNIEH-008</span>
+                  <p class="listing-title">2BR · Jounieh</p>
+                  <p class="listing-desc">96m² · top floor · morning light</p>
+                </div>
+                <button class="btn-outline btn-interest" type="button" tabindex="-1">I am interested in this Property</button>
+              </div>
 
-        <div class="scene scene-3" data-act="3">
-          <div class="anchor-slot" id="slot-3" aria-hidden="true"></div>
-          <div class="node node-admin">Admin</div>
-          <div class="node node-karim">Karim</div>
-          <div class="connector">
-            <span class="connector-label">ASSIGNED&ensp;·&ensp;0.4s</span>
-            <span class="connector-line"></span>
-          </div>
-          <div class="notify-card">
-            <div class="card-kicker">NEW LEAD&ensp;·&ensp;RANIA K.</div>
-            <p>Achrafieh · 2BR · $180,000 budget</p>
-            <p>WhatsApp: +961 3 xxx xxx</p>
-            <button class="btn-fill" type="button" tabindex="-1">Confirm Contact</button>
-          </div>
-        </div>
+              <!-- Act 4 — the calendar arrives in the thread -->
+              <div class="msg sys cal-msg m-a4-cal">
+                <div class="form-head">AVAILABLE VIEWING SLOTS</div>
+                <div class="cal-grid">
+                  <div class="cal-slot">Thu 10:00</div>
+                  <div class="cal-slot">Thu 14:30</div>
+                  <div class="cal-slot">Fri 09:00</div>
+                  <div class="cal-slot cal-picked" id="cal-fri">Fri 11:30</div>
+                  <div class="cal-slot">Sat 10:00</div>
+                  <div class="cal-slot">Sat 15:00</div>
+                </div>
+              </div>
 
-        <div class="scene scene-4" data-act="4">
-          <div class="anchor-slot" id="slot-4" aria-hidden="true"></div>
-          <div class="grid-label">AVAILABLE VIEWING SLOTS</div>
-          <div class="slot-grid">
-            <div class="slot-card">Thu 10:00</div>
-            <div class="slot-card">Thu 14:30</div>
-            <div class="slot-card">Fri 09:00</div>
-            <div class="slot-card slot-picked">Fri 11:30</div>
-            <div class="slot-card">Sat 10:00</div>
-            <div class="slot-card">Sat 15:00</div>
-          </div>
-          <div class="booking-card">
-            <div class="card-kicker">VIEWING REQUEST&ensp;·&ensp;Fri 11:30</div>
-            <p>Rania K. wants to view Achrafieh-014</p>
-            <div class="booking-actions">
-              <button class="btn-fill" type="button" tabindex="-1">Confirm</button>
-              <button class="btn-outline" type="button" tabindex="-1">Propose new time</button>
-              <button class="btn-outline" type="button" tabindex="-1">Reject</button>
+              <div class="chip m-a4-confirmed"><span class="chip-dot"></span>CONFIRMED&ensp;·&ensp;FRI 11:30</div>
+
             </div>
           </div>
-        </div>
 
-        <div class="scene scene-5" data-act="5">
-          <div class="kanban">
-            <div class="kcol">
-              <div class="kcol-head">NEW</div>
-              <div class="kcard">REF-1000</div>
+          <!-- ===== EXCURSION: the matching engine ===== -->
+          <div class="scene scene-engine" data-station="1">
+            <div class="engine-head">
+              <div class="engine-title">MATCHING AGAINST ACTIVE LISTINGS</div>
+              <div class="engine-count"><span class="engine-num" id="engine-num">84</span><span class="engine-unit" id="engine-unit">ACTIVE LISTINGS</span></div>
             </div>
-            <div class="kcol">
-              <div class="kcol-head">QUALIFIED</div>
-              <div class="kcard">REF-1037</div>
+            <div class="engine-filters">
+              <span class="fchip" data-w="1">AREA&ensp;·&ensp;ACHRAFIEH + COAST</span>
+              <span class="fchip" data-w="2">BEDROOMS&ensp;·&ensp;2</span>
+              <span class="fchip" data-w="3">BUDGET&ensp;·&ensp;≤ $180K</span>
             </div>
-            <div class="kcol">
-              <div class="kcol-head">MATCHED</div>
-              <div class="anchor-slot" id="slot-5" aria-hidden="true"></div>
-              <div class="kcard kcard-lead">RANIA K.<br>THREAD-0417</div>
-              <div class="kcard">REF-1075</div>
+            <div class="engine-grid" id="engine-grid"><!-- tiles injected by JS --></div>
+          </div>
+
+          <!-- ===== EXCURSION: assignment ===== -->
+          <div class="scene scene-assign" data-station="3">
+            <div class="assign-row">
+              <div class="agent-card agent-admin">
+                <div class="agent-disc">A</div>
+                <div class="agent-name">Admin</div>
+                <div class="agent-role">COORDINATOR</div>
+              </div>
+              <div class="beam">
+                <span class="beam-chip">ASSIGNED&ensp;·&ensp;0.4s</span>
+                <span class="beam-track"></span>
+                <span class="beam-fill"></span>
+                <span class="beam-head"></span>
+              </div>
+              <div class="agent-card agent-karim">
+                <div class="agent-disc disc-accent">K</div>
+                <div class="agent-name">Karim</div>
+                <div class="agent-role"><span class="live-dot"></span>SENIOR AGENT · ONLINE</div>
+              </div>
             </div>
-            <div class="kcol">
-              <div class="kcol-head">ASSIGNED</div>
-              <div class="kcard">REF-1111</div>
-            </div>
-            <div class="kcol">
-              <div class="kcol-head">CONTACTED</div>
-              <div class="kcard">REF-1148</div>
+            <div class="assign-stem"></div>
+            <div class="notify-card">
+              <div class="card-kicker">NEW LEAD&ensp;·&ensp;RANIA K.</div>
+              <p class="notify-main">Achrafieh · 2BR · $180,000 budget</p>
+              <p class="notify-sub">WhatsApp: +961 3 xxx xxx</p>
+              <button class="btn-fill" type="button" tabindex="-1">Confirm Contact</button>
             </div>
           </div>
-          <div class="ledger">
-            <div class="card-kicker">WEEKLY LEDGER</div>
-            <div class="ledger-row"><span class="ledger-name">Karim</span><span class="ledger-stat">6 contacted · 2 confirmed</span></div>
-            <div class="ledger-row"><span class="ledger-name">Dana</span><span class="ledger-stat">4 contacted · 3 confirmed</span></div>
-            <div class="ledger-row"><span class="ledger-name">— (quiet)</span><span class="ledger-stat">0 contacted · 0 confirmed</span></div>
-            <div class="ledger-row"><span class="ledger-name">Sami</span><span class="ledger-stat">5 contacted · 1 confirmed</span></div>
+
+          <!-- ===== EXCURSION: the agent's desk (act 4 confirmation) ===== -->
+          <div class="scene scene-agent" data-station="5">
+            <div class="agent-mini">
+              <span class="agent-disc disc-accent sm">K</span>
+              <span class="agent-mini-name">Karim</span>
+              <span class="agent-mini-role">AGENT VIEW</span>
+            </div>
+            <div class="booking-card">
+              <div class="card-kicker">VIEWING REQUEST&ensp;·&ensp;FRI 11:30</div>
+              <p class="booking-main">Rania K. wants to view <strong>Achrafieh-014</strong></p>
+              <div class="booking-actions">
+                <button class="btn-fill" id="btn-confirm" type="button" tabindex="-1">Confirm</button>
+                <button class="btn-outline btn-quiet" type="button" tabindex="-1">Propose new time</button>
+                <button class="btn-outline btn-quiet" type="button" tabindex="-1">Reject</button>
+              </div>
+            </div>
           </div>
-        </div>
+
+          <!-- ===== EXCURSION: the control room ===== -->
+          <div class="scene scene-ops" data-station="6">
+            <div class="kanban" id="kanban"><!-- columns injected by JS --></div>
+            <div class="ledger">
+              <div class="card-kicker">WEEKLY LEDGER</div>
+              <div class="ledger-stats">
+                <div class="stat"><span class="stat-num">32</span><span class="stat-label">LEADS ASSIGNED</span></div>
+                <div class="stat"><span class="stat-num">7</span><span class="stat-label">VIEWINGS BOOKED</span></div>
+                <div class="stat"><span class="stat-num">18</span><span class="stat-label">CONTACTED</span></div>
+              </div>
+              <div class="ledger-rows">
+                <div class="ledger-row"><span class="ledger-name">Karim</span><span class="ledger-stat">6 contacted · 2 confirmed</span></div>
+                <div class="ledger-row"><span class="ledger-name">Dana</span><span class="ledger-stat">4 contacted · 3 confirmed</span></div>
+                <div class="ledger-row"><span class="ledger-name">Sami</span><span class="ledger-stat">5 contacted · 1 confirmed</span></div>
+              </div>
+            </div>
+          </div>
 
         </div>
       </div>
