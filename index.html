@@ -23,7 +23,6 @@
 
   <main>
 
-    <!-- ===================== OPENER ===================== -->
     <section class="opener" id="opener">
       <div class="opener-inner">
         <h1 class="opener-headline">The Operating System for&nbsp;Modern Real&nbsp;Estate</h1>
@@ -33,20 +32,16 @@
       </div>
     </section>
 
-    <!-- ===================== THE SEQUENCE ===================== -->
     <section class="sequence" id="sequence">
       <div class="stage" id="stage">
 
-        <!-- ambient light behind the machine -->
         <div class="ambient" aria-hidden="true"></div>
 
-        <!-- ---------- the laptop ---------- -->
         <div class="machine" id="machine">
           <div class="bezel">
             <span class="lens" aria-hidden="true"></span>
             <div class="screen" id="screen">
 
-              <!-- app chrome -->
               <div class="appbar">
                 <span class="app-mark">kuiper.</span>
                 <nav class="tabs" id="tabs">
@@ -60,21 +55,13 @@
                 <span class="app-user" aria-hidden="true"><i>A</i></span>
               </div>
 
-              <!-- ---------- INBOX PANEL ---------- -->
-              <div class="panel panel-inbox" id="panel-inbox">
-
-                <!-- conversations list (GHL Conversations convention) -->
+              <!-- ============ INBOX ============ -->
+              <div class="panel panel-split" id="panel-inbox" data-panel="inbox">
                 <aside class="convo-list">
-                  <div class="convo-head">
-                    <span class="convo-title">Conversations</span>
-                    <span class="convo-count">43</span>
-                  </div>
+                  <div class="convo-head"><span class="convo-title">Conversations</span><span class="convo-count">43</span></div>
                   <div class="convo-row is-active">
                     <span class="convo-avatar">R</span>
-                    <span class="convo-body">
-                      <span class="convo-name">Rania K.</span>
-                      <span class="convo-snip">I am looking for a 2 bedroom…</span>
-                    </span>
+                    <span class="convo-body"><span class="convo-name">Rania K.</span><span class="convo-snip">I am looking for a 2 bedroom…</span></span>
                     <span class="convo-meta"><span class="convo-time">10:41</span><span class="convo-dot"></span></span>
                   </div>
                   <div class="convo-row is-redacted" aria-hidden="true"><span class="convo-avatar"></span><span class="convo-body"><span class="rb rb-a"></span><span class="rb rb-b"></span></span></div>
@@ -83,14 +70,10 @@
                   <div class="convo-row is-redacted" aria-hidden="true"><span class="convo-avatar"></span><span class="convo-body"><span class="rb rb-a"></span><span class="rb rb-b"></span></span></div>
                 </aside>
 
-                <!-- active thread -->
                 <section class="thread-pane">
                   <header class="thread-head">
                     <span class="th-avatar">R</span>
-                    <span class="th-id">
-                      <span class="th-name">Rania K.</span>
-                      <span class="th-num">+961 3 xxx xxx</span>
-                    </span>
+                    <span class="th-id"><span class="th-name">Rania K.</span><span class="th-num">+961 3 xxx xxx</span></span>
                     <span class="th-channel">WHATSAPP</span>
                   </header>
 
@@ -120,17 +103,111 @@
 
                       <div class="stamp" id="m-captured"><span class="stamp-dot"></span>CAPTURED&ensp;·&ensp;CRM-0417</div>
 
+                      <!-- the three matches arrive here, in the thread -->
+                      <div class="msg out listing" id="m-l1">
+                        <div class="lst-photo"><img src="Assets/Listing 1.jpg" alt="Achrafieh apartment interior"></div>
+                        <span class="lst-ref">Achrafieh-014</span>
+                        <p class="lst-spec">2BR · Achrafieh · 95m² · 2nd floor · balcony · $180,000</p>
+                        <button class="btn-interest" id="btn-interest" type="button" tabindex="-1">I am interested in this Property</button>
+                      </div>
+
+                      <div class="msg out listing" id="m-l2">
+                        <div class="lst-photo"><img src="Assets/Listing 2.jpg" alt="Dbayeh waterfront apartment interior"></div>
+                        <span class="lst-ref">Dbayeh-027</span>
+                        <p class="lst-spec">2BR · Dbayeh · 132m² · waterfront · $176,000</p>
+                        <button class="btn-interest" type="button" tabindex="-1">I am interested in this Property</button>
+                      </div>
+
+                      <div class="msg out listing" id="m-l3">
+                        <div class="lst-photo"><img src="Assets/Listing 3.jpg" alt="Jounieh apartment interior"></div>
+                        <span class="lst-ref">Jounieh-008</span>
+                        <p class="lst-spec">2BR · Jounieh · 96m² · top floor · $168,000</p>
+                        <button class="btn-interest" type="button" tabindex="-1">I am interested in this Property</button>
+                      </div>
+
                     </div>
                   </div>
 
                   <footer class="composer" aria-hidden="true">
-                    <span class="composer-field">Message</span>
-                    <span class="composer-send"></span>
+                    <span class="composer-field">Message</span><span class="composer-send"></span>
                   </footer>
                 </section>
               </div>
 
-              <!-- cursor lives above the app, inside the screen -->
+              <!-- ============ MATCHING ============ -->
+              <div class="panel panel-solo" id="panel-matching" data-panel="matching">
+                <div class="match-wrap">
+                  <div class="match-top">
+                    <span class="match-label">MATCHING AGAINST 84 ACTIVE LISTINGS</span>
+                    <span class="match-count"><b id="match-num">84</b><i>/ 84 listings</i></span>
+                  </div>
+
+                  <div class="chips">
+                    <span class="chip" data-c="0"><span class="chip-tick"></span>AREA · ACHRAFIEH + COAST</span>
+                    <span class="chip" data-c="1"><span class="chip-tick"></span>BEDROOMS · 2</span>
+                    <span class="chip" data-c="2"><span class="chip-tick"></span>BUDGET · ≤ $180,000</span>
+                  </div>
+
+                  <div class="ledger">
+                    <div class="ledger-head"><span>REF</span><span>AREA</span><span>BR</span><span>PRICE</span></div>
+                    <div class="ledger-body" id="ledger-body"></div>
+                    <div class="scanline" id="scanline" aria-hidden="true"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ============ AGENT DESK ============ -->
+              <div class="panel panel-split" id="panel-agent" data-panel="agent">
+                <aside class="convo-list">
+                  <div class="convo-head"><span class="convo-title">Team</span><span class="convo-count">9</span></div>
+                  <div class="convo-row is-active">
+                    <span class="convo-avatar">A</span>
+                    <span class="convo-body"><span class="convo-name">Admin</span><span class="convo-snip">New lead for you — Rania K.…</span></span>
+                    <span class="convo-meta"><span class="convo-time">10:41</span><span class="convo-dot"></span></span>
+                  </div>
+                  <div class="convo-row is-redacted" aria-hidden="true"><span class="convo-avatar"></span><span class="convo-body"><span class="rb rb-b"></span><span class="rb rb-a"></span></span></div>
+                  <div class="convo-row is-redacted" aria-hidden="true"><span class="convo-avatar"></span><span class="convo-body"><span class="rb rb-a"></span><span class="rb rb-c"></span></span></div>
+                  <div class="convo-row is-redacted" aria-hidden="true"><span class="convo-avatar"></span><span class="convo-body"><span class="rb rb-c"></span><span class="rb rb-b"></span></span></div>
+                </aside>
+
+                <section class="thread-pane">
+                  <header class="thread-head">
+                    <span class="th-avatar th-admin">A</span>
+                    <span class="th-id"><span class="th-name">Admin</span><span class="th-num">Karim · Senior agent</span></span>
+                    <span class="th-channel">INTERNAL</span>
+                  </header>
+
+                  <div class="thread" id="thread-agent">
+                    <div class="thread-inner" id="thread-agent-inner">
+
+                      <div class="msg in" id="a-admin">
+                        <p>New lead for you — Rania K. Achrafieh, 2BR, $180K, ready now.</p>
+                        <div class="lead-card">
+                          <span class="lc-head">NEW LEAD · RANIA K.</span>
+                          <span class="lc-row">Achrafieh · 2BR · $180,000 budget</span>
+                          <span class="lc-row">WhatsApp: +961 3 xxx xxx</span>
+                        </div>
+                        <span class="msg-meta">10:41:34</span>
+                      </div>
+
+                      <div class="msg out" id="a-karim">
+                        <p>On it.</p>
+                        <span class="msg-meta">10:41:38<i class="read">read</i></span>
+                      </div>
+
+                      <div class="confirm-wrap" id="a-confirm">
+                        <button class="btn-confirm" id="btn-confirm" type="button" tabindex="-1">Confirm Contact</button>
+                      </div>
+
+                    </div>
+                  </div>
+
+                  <footer class="composer" aria-hidden="true">
+                    <span class="composer-field">Message</span><span class="composer-send"></span>
+                  </footer>
+                </section>
+              </div>
+
               <div class="cursor" id="cursor" aria-hidden="true">
                 <svg viewBox="0 0 12 18" width="19" height="28"><path d="M1 1.2 L1 15.2 L4.6 11.9 L7 17 L9.4 15.9 L7 11 L11 10.8 Z" fill="#fff" stroke="#1A1917" stroke-width="1.1" stroke-linejoin="round"/></svg>
                 <span class="click-ring" id="click-ring"></span>
@@ -141,10 +218,9 @@
           <div class="chin" aria-hidden="true"></div>
         </div>
 
-        <!-- ---------- narration caption, outside the frame ---------- -->
         <div class="narration" id="narration">
           <span class="narration-tab" id="narration-tab">INBOX</span>
-          <p class="narration-line" id="narration-line"></p>
+          <div class="narration-stack" id="narration-stack"></div>
         </div>
 
       </div>
