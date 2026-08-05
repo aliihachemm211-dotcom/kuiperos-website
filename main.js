@@ -214,17 +214,6 @@ mm.add('(prefers-reduced-motion: no-preference)', () => {
   const CAP = buildCaptions();
   const appbar = document.querySelector('.appbar');
 
-  /* --- opener --- */
-  gsap.set(['.opener-tension', '.opener-sub', '.opener-pivot'], { autoAlpha: 0, y: 30 });
-  gsap.timeline({
-    defaults: { ease: 'none' },
-    scrollTrigger: { trigger: '#opener', start: 'top top', end: '+=130%', pin: true, scrub: true, invalidateOnRefresh: true }
-  })
-    .to('.opener-tension', { autoAlpha: 1, y: 0, duration: .2 }, .06)
-    .to('.opener-sub',     { autoAlpha: 1, y: 0, duration: .2 }, .34)
-    .to('.opener-pivot',   { autoAlpha: 1, y: 0, duration: .2 }, .64)
-    .to({}, { duration: .16 });
-
   /* --- base state --- */
   gsap.set(screenEl, { backgroundColor: '#0F0E0D' });
   gsap.set([appbar, PANEL.inbox], { autoAlpha: 0, scale: .965, filter: 'blur(9px)', y: 14 });
@@ -574,6 +563,77 @@ mm.add('(prefers-reduced-motion: reduce)', () => {
   return () => document.body.classList.remove('reduced');
 });
 
+/* ===========================================================================
+   HERO — two panels sharing one position, cross-fading on a ~9s loop.
+
+   Two independent signals ride the same count: the readout carries cost
+   (ink → pending amber at the hour mark → lost red), while the dot and
+   label carry neglect (accent → mute). They are deliberately separate.
+=========================================================================== */
+(function hero() {
+  const A = document.getElementById('hero-a');
+  const B = document.getElementById('hero-b');
+  const timeEl = document.getElementById('ll-time');
+  const dotEl = document.getElementById('ll-dot');
+  const labelEl = document.getElementById('ll-label');
+  if (!A || !B) return;
+
+  const COST_EARLY = gsap.utils.interpolate('#1A1917', '#B45309'); /* ink → pending */
+  const COST_LATE  = gsap.utils.interpolate('#B45309', '#B91C1C'); /* pending → lost */
+  const NEGLECT    = gsap.utils.interpolate('#2C5EFF', '#6E6B66'); /* fresh → abandoned */
+  const TOTAL = 156, HOUR = 60;
+
+  function render(n) {
+    timeEl.textContent = Math.round(n);
+    timeEl.style.color = n <= HOUR
+      ? COST_EARLY(n / HOUR)
+      : COST_LATE((n - HOUR) / (TOTAL - HOUR));
+    const g = NEGLECT(Math.min(1, n / TOTAL));
+    dotEl.style.backgroundColor = g;
+    labelEl.style.color = g;
+  }
+
+  gsap.set(A, { autoAlpha: 1 });
+  gsap.set(B, { autoAlpha: 0 });
+
+  /* A→B is a true cross-fade (both move together); B→A is fade out, pause,
+     then back to A — which is what the timing table adds up to: 2.6 + 0.7
+     + 0.6 + 4.5 + 0.6 + 0.7 = 9.7s. */
+  const COUNT = 2.6, HOLD = 0.7, XF = 0.6, RESOLVE = 4.5, PAUSE = 0.7;
+  const T_XF = COUNT + HOLD;              /* 3.3 */
+  const T_OUT = T_XF + XF + RESOLVE;      /* 8.4 */
+
+  const loop = gsap.timeline({ repeat: -1, paused: true });
+  loop.set(A, { autoAlpha: 0 }, 0)
+    .set(B, { autoAlpha: 0 }, 0)
+    .to(A, { autoAlpha: 1, duration: 0.4 }, 0);
+
+  if (REDUCED) {
+    /* no odometer: the resolved state is shown directly, but the panels
+       still cross-fade rather than going fully static */
+    render(TOTAL);
+  } else {
+    const c = { n: 0 };
+    render(0);
+    loop.fromTo(c, { n: 0 }, {
+      n: TOTAL, duration: COUNT, ease: 'power2.out',   /* ease-out-cubic */
+      onUpdate: () => render(c.n)
+    }, 0);
+  }
+
+  loop.to(A, { autoAlpha: 0, duration: XF }, T_XF)
+    .to(B, { autoAlpha: 1, duration: XF }, T_XF)
+    .to(B, { autoAlpha: 0, duration: XF }, T_OUT)
+    .to({}, { duration: PAUSE }, T_OUT + XF);
+
+  /* only run while the hero is actually on screen */
+  ScrollTrigger.create({
+    trigger: '#hero', start: 'top bottom', end: 'bottom top',
+    onToggle: (self) => self.isActive ? loop.play() : loop.pause()
+  });
+  loop.play();
+})();
+
 /* ---------------------------------------------------------------------------
    CTA -> form, and the form itself.
 
@@ -589,7 +649,7 @@ function goToSignup() {
   if (window.__lenis) window.__lenis.scrollTo(target, { offset: -40 });
   else target.scrollIntoView({ behavior: 'smooth' });
 }
-document.querySelectorAll('.btn-cta').forEach(b => b.addEventListener('click', goToSignup));
+document.querySelectorAll('.btn-cta, .btn-outline-cta').forEach(b => b.addEventListener('click', goToSignup));
 const resolveBtn = document.getElementById('resolve');
 if (resolveBtn) resolveBtn.addEventListener('click', goToSignup);
 
