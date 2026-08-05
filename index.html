@@ -280,10 +280,69 @@
           <div class="narration-stack" id="narration-stack"></div>
         </div>
 
+        <!-- the message the whole sequence began with, resolving into the CTA -->
+        <div class="resolve-wrap" id="resolve-wrap" aria-hidden="true">
+          <p class="cta-line" id="cta-line">Stop losing deals to chaos.</p>
+          <div class="resolve" id="resolve">
+            <span class="resolve-msg" id="resolve-msg">I am looking for a 2 bedroom in Achrafieh, anything available?</span>
+            <span class="resolve-cta" id="resolve-cta">Request early access</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ===================== EARLY ACCESS FORM ===================== -->
+    <section class="signup" id="signup">
+      <div class="signup-inner">
+        <h2 class="signup-title">Request early access</h2>
+        <form class="signup-form" id="signup-form" novalidate>
+          <div class="sf-row">
+            <label class="sf-field">
+              <span class="sf-label">Name <i>required</i></span>
+              <input type="text" name="name" autocomplete="name" required>
+            </label>
+            <label class="sf-field">
+              <span class="sf-label">WhatsApp number <i>required</i></span>
+              <input type="tel" name="whatsapp" autocomplete="tel" required>
+            </label>
+          </div>
+          <div class="sf-row">
+            <label class="sf-field">
+              <span class="sf-label">Brokerage name</span>
+              <input type="text" name="brokerage" autocomplete="organization">
+            </label>
+            <label class="sf-field">
+              <span class="sf-label">City</span>
+              <input type="text" name="city" autocomplete="address-level2">
+            </label>
+          </div>
+          <div class="sf-row">
+            <label class="sf-field sf-half">
+              <span class="sf-label">Team size</span>
+              <input type="text" name="team" inputmode="numeric">
+            </label>
+          </div>
+          <button class="sf-submit" type="submit">Request early access</button>
+          <p class="sf-privacy">We’ll only use this to contact you.</p>
+          <p class="sf-done" id="sf-done" hidden>Thanks — we’ll be in touch.</p>
+        </form>
       </div>
     </section>
 
   </main>
+
+  <footer class="site-footer">
+    <div class="foot-inner">
+      <span class="foot-mark">kuiper.</span>
+      <nav class="foot-links">
+        <a href="mailto:hello@go-kuiper.com">hello@go-kuiper.com</a>
+        <a href="https://instagram.com/gokuiper" target="_blank" rel="noopener">Instagram @gokuiper</a>
+        <a href="https://www.linkedin.com/" target="_blank" rel="noopener">LinkedIn</a>
+      </nav>
+      <span class="foot-copy">© 2026 kuiperOS</span>
+    </div>
+  </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>

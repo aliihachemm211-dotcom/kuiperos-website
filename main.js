@@ -477,6 +477,48 @@ mm.add('(prefers-reduced-motion: no-preference)', () => {
     .to('.ctrl-aggregate', { autoAlpha: 1, y: 0, duration: .22 }, 15.52)
     .to('.ctrl-row', { autoAlpha: 1, y: 0, duration: .16, stagger: { each: .045 } }, 15.74);
 
+  /* =====================================================================
+     CTA resolution (8.10) — the room comes back to Paper, the machine
+     recedes, and the message the sequence opened with becomes the button.
+  ===================================================================== */
+  const OUT = 16.22;
+  capOut(4, OUT);
+  /* the narration belongs to the demo; it leaves with the machine */
+  tl.to('#narration-tab', { autoAlpha: 0, y: -10, duration: .14 }, OUT);
+
+  /* back out of the inversion */
+  tl.to('body', { backgroundColor: '#FAF9F7', duration: .48 }, OUT)
+    .to('#pagelight', { opacity: 1, duration: .48 }, OUT)
+    .to('.site-header', { backgroundColor: 'rgba(250,249,247,.78)', borderBottomColor: '#E8E5E0', duration: .48 }, OUT)
+    .to('.wordmark', { color: '#1A1917', duration: .48 }, OUT)
+    .to('.ambient', { opacity: 1, duration: .48 }, OUT);
+
+  /* the machine travels away from the camera */
+  tl.to(machine, {
+    scale: () => parseFloat(machine.dataset.scale || 1) * .46,
+    y: -30, filter: 'blur(6px)', duration: .62
+  }, OUT + .04)
+    .to(machine, { autoAlpha: 0, duration: .2 }, OUT + .46);
+
+  /* the message emerges from it and comes forward */
+  tl.fromTo('#resolve-wrap', { autoAlpha: 0 }, { autoAlpha: 1, duration: .14, immediateRender: false }, OUT + .22)
+    .fromTo('#resolve', { scale: .42, y: 26 }, { scale: 1, y: 0, duration: .5, immediateRender: false }, OUT + .22);
+
+  /* and becomes the button: one element, morphed */
+  const MORPH = OUT + .78;
+  tl.to('#resolve', {
+    width: 268, height: 60, borderRadius: 8,
+    backgroundColor: '#2C5EFF', borderColor: '#2C5EFF',
+    boxShadow: '0 2px 6px rgba(44,94,255,.18), 0 18px 40px -12px rgba(44,94,255,.45)',
+    duration: .42
+  }, MORPH)
+    .to('#resolve-msg', { autoAlpha: 0, duration: .16 }, MORPH)
+    .to('#resolve-cta', { autoAlpha: 1, duration: .18 }, MORPH + .2);
+
+  /* the line that bookends the opener */
+  tl.fromTo('#cta-line', { autoAlpha: 0, y: 26, filter: 'blur(6px)' },
+    { autoAlpha: 1, y: 0, filter: 'blur(0px)', duration: .32, immediateRender: false }, MORPH + .16);
+
   tl.to({}, { duration: .34 });   /* a beat of rest on the finished frame */
   DUR = tl.duration();
   ScrollTrigger.getById('seq').refresh();
@@ -531,6 +573,47 @@ mm.add('(prefers-reduced-motion: reduce)', () => {
   gsap.set(underline, { x: t.offsetLeft, width: t.offsetWidth });
   return () => document.body.classList.remove('reduced');
 });
+
+/* ---------------------------------------------------------------------------
+   CTA -> form, and the form itself.
+
+   NOTE: the form is NOT connected to anything yet. SIGNUP_ENDPOINT is a
+   deliberate placeholder — submissions are not sent or stored anywhere.
+   Wire it to a real hosted endpoint before this goes live.
+--------------------------------------------------------------------------- */
+const SIGNUP_ENDPOINT = null;   /* TODO: hosted form endpoint */
+
+function goToSignup() {
+  const target = document.getElementById('signup');
+  if (!target) return;
+  if (window.__lenis) window.__lenis.scrollTo(target, { offset: -40 });
+  else target.scrollIntoView({ behavior: 'smooth' });
+}
+document.querySelectorAll('.btn-cta').forEach(b => b.addEventListener('click', goToSignup));
+const resolveBtn = document.getElementById('resolve');
+if (resolveBtn) resolveBtn.addEventListener('click', goToSignup);
+
+const signupForm = document.getElementById('signup-form');
+if (signupForm) {
+  signupForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = signupForm.elements.name;
+    const wa = signupForm.elements.whatsapp;
+    let ok = true;
+    [name, wa].forEach(f => {
+      const bad = !f.value.trim();
+      f.style.borderColor = bad ? '#2C5EFF' : '';
+      if (bad) ok = false;
+    });
+    if (!ok) { name.value.trim() ? wa.focus() : name.focus(); return; }
+    if (!SIGNUP_ENDPOINT) {
+      /* nothing is transmitted until an endpoint exists */
+      document.getElementById('sf-done').hidden = false;
+      signupForm.querySelector('.sf-submit').disabled = true;
+      return;
+    }
+  });
+}
 
 if (document.fonts && document.fonts.ready) {
   document.fonts.ready.then(() => ScrollTrigger.refresh());
