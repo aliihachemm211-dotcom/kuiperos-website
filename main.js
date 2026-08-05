@@ -489,15 +489,19 @@ mm.add('(prefers-reduced-motion: no-preference)', () => {
   switchTab('agent', A[4], .42);
   capA(4, A[4] + .14);
 
+  /* cause before effect: he's handed the lead, he confirms it, then he
+     answers. The button used to arrive after "On it.", which read as him
+     confirming his own reply. */
   pushIn(thAgent, inAgent, '#a-admin',   A[4] + .49, .30, 24);
-  pushIn(thAgent, inAgent, '#a-karim',   A[4] + .83, .26, 24);
-  pushIn(thAgent, inAgent, '#a-confirm', A[4] + 1.09, .22, 24);
+  pushIn(thAgent, inAgent, '#a-confirm', A[4] + .84, .22, 24);
 
   const confirm = document.getElementById('btn-confirm');
-  moveTo(confirm, A[4] + 1.31, .14, 16, -12);
-  click(A[4] + 1.45);
-  tl.to(confirm, { scale: .955, duration: .035 }, A[4] + 1.45)
-    .to(confirm, { scale: 1, duration: .05 }, A[4] + 1.485);
+  moveTo(confirm, A[4] + 1.02, .14, 16, -12);
+  click(A[4] + 1.16);
+  tl.to(confirm, { scale: .955, duration: .035 }, A[4] + 1.16)
+    .to(confirm, { scale: 1, duration: .05 }, A[4] + 1.195);
+
+  pushIn(thAgent, inAgent, '#a-karim', A[4] + 1.34, .26, 24);
 
   /* =====================================================================
      ACT 5 — Booking, in her thread. She picks a slot; a quick cutaway shows
@@ -559,6 +563,8 @@ mm.add('(prefers-reduced-motion: no-preference)', () => {
 
   tl.to('body', { backgroundColor: '#1A1917', duration: INV_D * .8 }, INV)
     .to('#pagelight', { opacity: 0, duration: INV_D * .6 }, INV)
+    /* the warm surround has to clear or the room can't go to ink */
+    .to('#seq-ground', { opacity: 0, duration: INV_D * .7 }, INV)
     .to(screenEl, { backgroundColor: '#1A1917', duration: INV_D * .8 }, INV)
     .to('.site-header', { backgroundColor: 'rgba(26,25,23,.78)', borderBottomColor: '#3C3A37', duration: INV_D * .8 }, INV)
     .to('.wordmark', { color: '#FAF9F7', duration: INV_D * .8 }, INV)
@@ -596,6 +602,7 @@ mm.add('(prefers-reduced-motion: no-preference)', () => {
   /* back out of the inversion */
   tl.to('body', { backgroundColor: '#FAF9F7', duration: .48 }, OUT)
     .to('#pagelight', { opacity: 1, duration: .48 }, OUT)
+    .to('#seq-ground', { opacity: 1, duration: .48 }, OUT)
     .to('.site-header', { backgroundColor: 'rgba(250,249,247,.78)', borderBottomColor: '#E8E5E0', duration: .48 }, OUT)
     .to('.wordmark', { color: '#1A1917', duration: .48 }, OUT)
     .to('.skip-demo', {
@@ -629,7 +636,11 @@ mm.add('(prefers-reduced-motion: no-preference)', () => {
   tl.fromTo('#cta-line', { autoAlpha: 0, y: 26, filter: 'blur(6px)' },
     { autoAlpha: 1, y: 0, filter: 'blur(0px)', duration: .32, immediateRender: false }, MORPH + .16);
 
-  tl.to({}, { duration: .34 });   /* a beat of rest on the finished frame */
+  /* Dead scroll after the CTA resolves. At .34 the line finished barely
+     before the pin released, so every small scroll at the bottom scrubbed it
+     back and forth and it read as a glitch. It now completes well clear of
+     the end and idle movement can't reach it. */
+  tl.to({}, { duration: 1.3 });
   DUR = tl.duration();
   ScrollTrigger.getById('seq').refresh();
 
@@ -727,7 +738,8 @@ function splitWords(el) {
   const wrap   = document.getElementById('decay-wrap');
   const col    = document.getElementById('decay-col');
   const stage  = document.getElementById('hero-stage');
-  const glow   = document.getElementById('decay-glow');
+  const kicker = document.getElementById('decay-kicker');
+  const lift   = document.getElementById('dc-lift');
   const reply  = document.getElementById('dc-reply');
   const replyLabel = document.getElementById('dc-reply-label');
   const dot    = document.getElementById('dc-dot');
@@ -761,16 +773,18 @@ function splitWords(el) {
   const setResolved = () => {
     gsap.set(wrap, { x: 0, scale: 1, clearProps: 'filter' });
     gsap.set(card, { boxShadow: 'var(--lift-1)', filter: 'saturate(.72)', scale: 1, y: 0 });
-    gsap.set(glow, { autoAlpha: 0 });
     gsap.set(reply, { autoAlpha: 0 });
+    gsap.set(lift, { opacity: 0 });
     gsap.set(typing, { autoAlpha: 0 });
     gsap.set(excuse, { autoAlpha: 0 });
     gsap.set([PW, QW], { y: '0%' });
     gsap.set([punch, quiet], { autoAlpha: 1 });
+    gsap.set(kicker, { autoAlpha: 1, y: 0 });
     ago.textContent = '36 minutes ago';
     status.textContent = 'Likely gone.';
     dot.style.backgroundColor = LOST;
     chan.style.color = LOST;
+    ago.style.color = LOST;
     status.style.color = LOST;
     status.style.backgroundColor = tint(LOST, .09);
   };
@@ -789,12 +803,14 @@ function splitWords(el) {
   gsap.set([punch, quiet], { autoAlpha: 1 });
   gsap.set([PW, QW], { y: '105%' });
   gsap.set(card, { autoAlpha: 0, y: 22, scale: .96, filter: 'blur(7px) saturate(1)' });
-  gsap.set(glow, { autoAlpha: 0, scale: .96 });
+  gsap.set(kicker, { autoAlpha: 0, y: 10 });
 
-  /* --- the breath: a slow ambient pulse that decelerates to still --------- */
-  const breath = gsap.to(glow, {
-    scale: 1.055, opacity: .74, duration: 1.5,
-    ease: 'sine.inOut', repeat: -1, yoyo: true, paused: true
+  /* The breath is an opacity fade on a promoted shadow layer. The previous
+     version tweened box-shadow on the card itself, which repainted a large
+     blurred region every frame and took the whole page under 1fps. */
+  const breath = gsap.to(lift, {
+    opacity: .85, duration: 1.9, ease: 'sine.inOut',
+    repeat: -1, yoyo: true, paused: true
   });
 
   /* =========================== the clock ================================= */
@@ -810,52 +826,49 @@ function splitWords(el) {
       chan.style.color = colour;
       status.style.color = colour;
       status.style.backgroundColor = tint(colour, .09);
-      gsap.fromTo(glow,
-        { background: glow.style.background || '' },
-        { duration: 0 });
-      glow.style.background =
-        'radial-gradient(58% 54% at 50% 52%, ' + tint(colour, .20) + ', ' + tint(colour, 0) + ' 72%)';
+      ago.style.color = colour;
     }, null, at);
     /* the readout itself ticks over physically, not as a text swap */
     decay.fromTo(ago, { y: 5 }, { y: 0, duration: .22, ease: 'power2.out' }, at);
   };
 
   /* card arrives */
-  decay.to(card, { autoAlpha: 1, duration: .28 }, 0)
-    .to(card, { y: 0, scale: 1, filter: 'blur(0px) saturate(1)', duration: .72, ease: 'power3.out' }, 0)
-    .to(glow, { autoAlpha: 1, scale: 1, duration: .6, ease: 'power2.out' }, .1)
-    .call(() => breath.play(), null, .5);
+  decay.to(kicker, { autoAlpha: 1, y: 0, duration: .5, ease: 'power3.out' }, 0)
+    .to(card, { autoAlpha: 1, duration: .28 }, .18)
+    .to(card, { y: 0, scale: 1, filter: 'blur(0px) saturate(1)', duration: .8, ease: 'power3.out' }, .18)
+    .call(() => breath.play(), null, .8);
 
-  beat(0.00, '2 seconds ago',  'Interested', WON);
-  beat(0.75, '47 seconds ago', null, null);
+  beat(0.28, '2 seconds ago',  'Interested', WON);
+  beat(1.05, '47 seconds ago', null, null);
 
   /* the near-miss: a reply gets drafted, then abandoned unsent */
   decay.fromTo(typing, { autoAlpha: 0, scale: .8, y: -6 },
-    { autoAlpha: 1, scale: 1, y: 0, duration: .3, ease: 'back.out(2)' }, 1.0);
+    { autoAlpha: 1, scale: 1, y: 0, duration: .3, ease: 'back.out(2)' }, 1.35);
   decay.to(typing.querySelectorAll('i'), {
-    y: -3, duration: .3, ease: 'sine.inOut', repeat: 2, yoyo: true, stagger: .09
-  }, 1.15);
+    y: -3, duration: .32, ease: 'sine.inOut', repeat: 3, yoyo: true, stagger: .09
+  }, 1.5);
   /* it collapses back rather than fading — an aborted attempt, not a sent one */
-  decay.to(typing, { scale: .72, y: 8, autoAlpha: 0, duration: .26, ease: 'power2.in' }, 2.0);
+  decay.to(typing, { scale: .72, y: 8, autoAlpha: 0, duration: .26, ease: 'power2.in' }, 2.75);
 
-  beat(2.20, '3 minutes ago',  'Waiting…', PENDING);
-  beat(3.30, '11 minutes ago', null, null);
-  beat(4.75, '36 minutes ago', 'Likely gone.', LOST);
+  /* The last two holds carry most of the added time: the deceleration is the
+     point, so that is where slowing it down actually reads. */
+  beat(3.05, '3 minutes ago',  'Waiting…', PENDING);
+  beat(4.75, '11 minutes ago', null, null);
+  beat(6.95, '36 minutes ago', 'Likely gone.', LOST);
 
   /* the card physically recedes as it cools: elevation drops, colour drains,
      proportions tighten. The breath slows in step and settles to still. */
-  decay.to(card, { boxShadow: 'var(--lift-2)', duration: 1.6 }, 1.0)
-    .to(card, { boxShadow: 'var(--lift-1)', filter: 'saturate(.72)', scale: .984, duration: 2.4 }, 2.6)
-    .to(breath, { timeScale: .34, duration: 3.4, ease: 'power1.in' }, 1.4)
-    .to(glow, { autoAlpha: 0, duration: 1.4 }, 3.9)
-    .call(() => breath.pause(), null, 5.3)
-    .to({}, { duration: .25 });   /* a beat of stillness before the copy */
+  decay.to(breath, { timeScale: .28, duration: 5.2, ease: 'power1.in' }, 1.6)
+    .call(() => { breath.pause(); }, null, 7.2)
+    .to(lift, { opacity: 0, duration: 1.1 }, 6.4)
+    .to(card, { boxShadow: 'var(--lift-1)', filter: 'saturate(.72)', scale: .984, duration: 1.1 }, 7.2)
+    .to({}, { duration: .4 });   /* a beat of stillness before the copy */
 
   /* ======================== the resolution copy ========================== */
   const copy = gsap.timeline({ paused: true });
-  copy.to(wrap, { x: 0, duration: 1.05, ease: 'power3.inOut' }, 0)
-    .to(PW, { y: '0%', duration: .8, ease: 'power3.out', stagger: .035 }, .25)
-    .to(QW, { y: '0%', duration: .62, ease: 'power3.out', stagger: .014 }, 1.35);
+  copy.to(wrap, { x: 0, duration: 1.25, ease: 'power3.inOut' }, 0)
+    .to(PW, { y: '0%', duration: .95, ease: 'power3.out', stagger: .045 }, .35)
+    .to(QW, { y: '0%', duration: .7, ease: 'power3.out', stagger: .018 }, 1.85);
 
   /* =================== the reply affordance and excuses ================== */
   /* Clicking never pauses the clock. Both paths land on the same end state. */
@@ -892,11 +905,11 @@ function splitWords(el) {
     gsap.to(excuse, { autoAlpha: 0, y: -10, scale: .94, duration: .26, ease: 'power2.in' });
   };
 
-  gsap.delayedCall(1.5, showReply);
+  gsap.delayedCall(2.0, showReply);
   /* it retires exactly when the lead is declared gone — past that there is
      nothing left to reply to, which is the point the hero is making */
-  decay.call(retireReply, null, 4.75);
-  decay.call(clearExcuse, null, 5.05);
+  decay.call(retireReply, null, 6.95);
+  decay.call(clearExcuse, null, 7.35);
 
   function excuseOnce() {
     if (done || retired || clicks >= CLICK_CAP) return;  /* a third click does nothing */
@@ -924,7 +937,7 @@ function splitWords(el) {
     done = true;
     retired = true;
     breath.kill();
-    gsap.killTweensOf([excuse, typing, card, glow, wrap, reply]);
+    gsap.killTweensOf([excuse, typing, card, wrap, reply, kicker, lift]);
     decay.pause().kill();
     copy.pause().kill();
     setResolved();
@@ -1102,306 +1115,3 @@ if (signupForm) {
 if (document.fonts && document.fonts.ready) {
   document.fonts.ready.then(() => ScrollTrigger.refresh());
 }
-
-/* ===========================================================================
-   AMBIENT — the routing engine.
-
-   Sparse particles enter from the edges and travel to a destination through
-   an invisible lattice, choosing their turns as they go. Paths split, merge
-   and reroute; nothing drifts and nothing arrives nowhere. It visualises what
-   kuiper actually does — matching, assignment, routing — rather than "a
-   system is thinking".
-
-   The lattice itself is never drawn. Only the moving particle, the trace it
-   has just cut, and a blue flash at the moment a route completes. Drawing the
-   graph would land on the neural-mesh cliché this deliberately isn't.
-
-   Legibility is the hard constraint: alphas here are deliberately near the
-   threshold of visibility, and the whole layer steps back behind the demo.
-=========================================================================== */
-(function routing() {
-  const cv = document.createElement('canvas');
-  cv.className = 'routing';
-  cv.setAttribute('aria-hidden', 'true');
-  document.body.prepend(cv);
-  const ctx = cv.getContext('2d');
-
-  let W = 0, H = 0, GAP = 170, cols = 0, rows = 0;
-  let nodes = [];
-  const at = (c, r) => nodes[r * cols + c];
-
-  function build() {
-    const DPR = Math.min(2, window.devicePixelRatio || 1);
-    W = window.innerWidth; H = window.innerHeight;
-    cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
-    cv.style.width = W + 'px'; cv.style.height = H + 'px';
-    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-
-    GAP = W < 768 ? 132 : 172;
-    cols = Math.ceil(W / GAP) + 3;
-    rows = Math.ceil(H / GAP) + 3;
-
-    /* jitter is hashed off the cell, not random, so the lattice is stable
-       across resizes — routes don't jump when the viewport changes */
-    nodes = [];
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        const h = ((c * 73856093) ^ (r * 19349663)) >>> 0;
-        const jx = (((h % 997) / 997) - .5) * GAP * .40;
-        const jy = ((((h >> 11) % 997) / 997) - .5) * GAP * .40;
-        nodes.push({ x: (c - 1) * GAP + jx, y: (r - 1) * GAP + jy });
-      }
-    }
-  }
-
-  /* Visibility budget. These are the dials to turn if it ever reads as too
-     present — the ceiling is text legibility, nothing else. */
-  const TRAIL_A = .20;      /* the routed trace              */
-  const HEAD_A  = .34;      /* the particle itself           */
-  const DEMO_LV = .42;      /* multiplier behind the demo    */
-
-  /* --- population ------------------------------------------------------- */
-  const MAX = () => (W < 768 ? 8 : 15);
-  const parts = [];
-  const flashes = [];
-
-  const randEdge = () => {
-    const s = (Math.random() * 4) | 0;
-    if (s === 0) return { c: (Math.random() * cols) | 0, r: 0 };
-    if (s === 1) return { c: cols - 1, r: (Math.random() * rows) | 0 };
-    if (s === 2) return { c: (Math.random() * cols) | 0, r: rows - 1 };
-    return { c: 0, r: (Math.random() * rows) | 0 };
-  };
-
-  function destFrom(s) {
-    const far = Math.max(3, ((cols + rows) / 5) | 0);
-    let d, n = 0;
-    do {
-      d = { c: (Math.random() * cols) | 0, r: (Math.random() * rows) | 0 };
-      n++;
-    } while (n < 14 && Math.abs(d.c - s.c) + Math.abs(d.r - s.r) < far);
-    return d;
-  }
-
-  function spawn(from, dest) {
-    if (parts.length >= MAX() + 4) return;
-    const s = from || randEdge();
-    const d = dest || destFrom(s);
-    const p = {
-      c: s.c, r: s.r, dc: d.c, dr: d.r,
-      t: 0, speed: .010 + Math.random() * .008,
-      dir: null, trail: [], fade: 0, dying: 0, split: Math.random() < .22
-    };
-    p.x = at(p.c, p.r).x; p.y = at(p.c, p.r).y;
-    p.trail.push({ x: p.x, y: p.y });
-    hop(p);
-    parts.push(p);
-  }
-
-  /* Pick the next leg. Only moves that close the gap are considered, so every
-     particle is always heading somewhere; straight is preferred so the traces
-     read as routed runs rather than a wander. */
-  function hop(p) {
-    const opts = [];
-    if (p.dc > p.c) opts.push([1, 0]);
-    if (p.dc < p.c) opts.push([-1, 0]);
-    if (p.dr > p.r) opts.push([0, 1]);
-    if (p.dr < p.r) opts.push([0, -1]);
-    if (!opts.length) { p.arrived = true; return; }
-
-    let pick = opts[(Math.random() * opts.length) | 0];
-    if (p.dir && opts.length > 1 && Math.random() < .64) {
-      const straight = opts.find(o => o[0] === p.dir[0] && o[1] === p.dir[1]);
-      if (straight) pick = straight;
-    }
-    p.dir = pick;
-    p.fc = p.c; p.fr = p.r;
-    p.c += pick[0]; p.r += pick[1];
-    p.t = 0;
-  }
-
-  const flash = (x, y) => flashes.push({ x, y, t: 0 });
-
-  /* --- intensity: recedes behind the laptop-frame demo ------------------- */
-  let level = 1, target = 1;
-  function retarget() {
-    const seq = document.getElementById('sequence');
-    if (!seq) return;
-    const b = seq.getBoundingClientRect();
-    /* the demo screens are already dense with real UI; nothing competes */
-    target = (b.top < H * .62 && b.bottom > H * .38) ? DEMO_LV : 1;
-  }
-
-  /* --- theme: the page inverts under the Control Room ------------------- */
-  let dark = false, themeTick = 0;
-  function sampleTheme() {
-    const m = getComputedStyle(document.body).backgroundColor.match(/\d+(\.\d+)?/g);
-    if (!m) return;
-    dark = (+m[0] * .299 + +m[1] * .587 + +m[2] * .114) < 110;
-  }
-
-  /* --- frame ------------------------------------------------------------ */
-  function step(dt) {
-    while (parts.length < MAX()) spawn();
-
-    for (let i = parts.length - 1; i >= 0; i--) {
-      const p = parts[i];
-
-      if (p.dying) {
-        p.dying -= dt * 2.4;
-        if (p.dying <= 0) parts.splice(i, 1);
-        continue;
-      }
-
-      p.fade = Math.min(1, p.fade + dt * 1.6);
-      p.t += p.speed * dt * 60;
-
-      if (p.t >= 1) {
-        const n = at(p.c, p.r);
-        p.trail.push({ x: n.x, y: n.y });
-        if (p.trail.length > 7) p.trail.shift();
-
-        /* a route completes: the one moment blue is allowed */
-        if (p.c === p.dc && p.r === p.dr) {
-          flash(n.x, n.y);
-          p.dying = 1;
-          continue;
-        }
-        /* split: the same inquiry fanning out to a second destination */
-        if (p.split && Math.random() < .06) {
-          p.split = false;
-          spawn({ c: p.c, r: p.r }, destFrom({ c: p.c, r: p.r }));
-        }
-        /* reroute: destinations change while work is in flight */
-        if (Math.random() < .04) {
-          const d = destFrom({ c: p.c, r: p.r });
-          p.dc = d.c; p.dr = d.r;
-        }
-        hop(p);
-        if (p.arrived) { flash(n.x, n.y); p.dying = 1; continue; }
-      }
-
-      const a = at(p.fc, p.fr), b = at(p.c, p.r);
-      if (!a || !b) { parts.splice(i, 1); continue; }
-      const e = p.t * p.t * (3 - 2 * p.t);        /* ease into each node */
-      p.x = a.x + (b.x - a.x) * e;
-      p.y = a.y + (b.y - a.y) * e;
-    }
-
-    /* merge: two particles meeting at the same point resolve into one */
-    for (let i = parts.length - 1; i >= 0; i--) {
-      const p = parts[i];
-      if (p.dying) continue;
-      for (let j = i - 1; j >= 0; j--) {
-        const q = parts[j];
-        if (q.dying) continue;
-        if (Math.abs(p.x - q.x) < 5 && Math.abs(p.y - q.y) < 5) {
-          flash(p.x, p.y);
-          p.dying = 1;
-          break;
-        }
-      }
-    }
-
-    for (let i = flashes.length - 1; i >= 0; i--) {
-      flashes[i].t += dt * 2.1;
-      if (flashes[i].t >= 1) flashes.splice(i, 1);
-    }
-
-    level += (target - level) * Math.min(1, dt * 3);
-  }
-
-  function draw() {
-    ctx.clearRect(0, 0, W, H);
-    const line = dark ? '236,234,231' : '110,107,102';
-    const head = dark ? '250,249,247' : '26,25,23';
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.lineWidth = 1;
-
-    for (const p of parts) {
-      const k = level * p.fade * (p.dying ? p.dying : 1);
-      if (k <= .01) continue;
-
-      const pts = p.trail.concat([{ x: p.x, y: p.y }]);
-      for (let i = 1; i < pts.length; i++) {
-        const a = (i / pts.length) * TRAIL_A * k;
-        if (a < .004) continue;
-        ctx.strokeStyle = 'rgba(' + line + ',' + a.toFixed(4) + ')';
-        ctx.beginPath();
-        ctx.moveTo(pts[i - 1].x, pts[i - 1].y);
-        ctx.lineTo(pts[i].x, pts[i].y);
-        ctx.stroke();
-      }
-
-      ctx.fillStyle = 'rgba(' + head + ',' + (HEAD_A * k).toFixed(4) + ')';
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, 1.9, 0, 6.2832);
-      ctx.fill();
-    }
-
-    /* arrival — accent blue, and only here */
-    for (const f of flashes) {
-      const k = (1 - f.t) * level;
-      ctx.lineWidth = 1.3;
-      ctx.strokeStyle = 'rgba(44,94,255,' + (.55 * k).toFixed(4) + ')';
-      ctx.beginPath();
-      /* a negative radius throws and takes the whole loop down with it */
-      ctx.arc(f.x, f.y, Math.max(.1, 2 + 15 * f.t), 0, 6.2832);
-      ctx.stroke();
-      ctx.lineWidth = 1;
-      ctx.fillStyle = 'rgba(44,94,255,' + (.85 * k).toFixed(4) + ')';
-      ctx.beginPath();
-      ctx.arc(f.x, f.y, 2.1, 0, 6.2832);
-      ctx.fill();
-    }
-  }
-
-  /* --- run -------------------------------------------------------------- */
-  build();
-  sampleTheme();
-
-  if (REDUCED) {
-    /* one still frame: the texture is present, nothing moves */
-    for (let i = 0; i < 9; i++) {
-      spawn();
-      const p = parts[parts.length - 1];
-      for (let n = 0; n < 3 + ((Math.random() * 4) | 0); n++) {
-        p.t = 1; p.fade = 1; step(0);
-      }
-    }
-    parts.forEach(p => p.fade = 1);
-    level = 1;
-    draw();
-    window.addEventListener('resize', () => { build(); draw(); });
-    return;
-  }
-
-  let last = 0, raf = 0;
-  function frame(now) {
-    /* rAF stamps the frame's START, which can precede the performance.now()
-       taken while this script was running inside that same frame — so the
-       first delta comes out negative. Unclamped it drove fade and t negative,
-       every particle failed the k <= .01 visibility test, and the arrival
-       radius eventually went negative and threw, killing the loop outright.
-       That is why the layer looked empty. Clamp at the source. */
-    const dt = last ? Math.min(.05, Math.max(0, (now - last) / 1000)) : 0;
-    last = now;
-    if (++themeTick % 18 === 0) { sampleTheme(); retarget(); }
-    step(dt);
-    draw();
-    raf = requestAnimationFrame(frame);
-  }
-  raf = requestAnimationFrame(frame);
-
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) { cancelAnimationFrame(raf); raf = 0; }
-    else if (!raf) { last = performance.now(); raf = requestAnimationFrame(frame); }
-  });
-
-  let rt = 0;
-  window.addEventListener('resize', () => {
-    clearTimeout(rt);
-    rt = setTimeout(() => { build(); parts.length = 0; flashes.length = 0; }, 160);
-  });
-})();

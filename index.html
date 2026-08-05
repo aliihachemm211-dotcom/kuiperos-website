@@ -38,9 +38,16 @@
         <div class="decay-col" id="decay-col">
           <div class="decay-wrap" id="decay-wrap">
 
-            <!-- ambient breath: a slow glow behind the card, not a UI element -->
-            <div class="decay-glow" id="decay-glow" aria-hidden="true"></div>
+            <!-- a label, not a headline: without it a cold visitor has no idea
+                 what they're looking at for the whole length of the decay.
+                 Inside the wrap so it travels with the card when it recentres. -->
+            <p class="decay-kicker" id="decay-kicker">A new lead just messaged you</p>
 
+            <!-- the breath: a promoted layer carrying the lifted shadow, so
+                 the pulse is an opacity change on the compositor rather than
+                 a box-shadow repaint every frame -->
+            <div class="dc-shell">
+              <div class="dc-lift" id="dc-lift" aria-hidden="true"></div>
             <article class="decay-card" id="decay-card">
               <div class="dc-top">
                 <span class="dc-dot" id="dc-dot" aria-hidden="true"></span>
@@ -49,11 +56,14 @@
               </div>
               <p class="dc-body">I am looking for a 2 bedroom in Achrafieh, anything available?</p>
               <div class="dc-meta">
-                <span class="dc-clock">10:41</span>
+                <!-- the elapsed time is the story, so it is the loudest thing
+                     on the card rather than 9.5px of metadata -->
                 <span class="dc-ago" id="dc-ago">2 seconds ago</span>
                 <span class="dc-status" id="dc-status">Interested</span>
               </div>
+              <div class="dc-foot"><span class="dc-clock">Received 10:41</span></div>
             </article>
+            </div>
 
             <!-- a reply being drafted, then abandoned unsent -->
             <div class="dc-typing" id="dc-typing" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -110,6 +120,9 @@
     </section>
 
     <section class="sequence" id="sequence">
+      <!-- its own element rather than a background on .sequence, so the
+           Control Room inversion can scrub it away and reveal the ink -->
+      <div class="seq-ground" id="seq-ground" aria-hidden="true"></div>
       <div class="stage" id="stage">
 
         <div class="ambient" aria-hidden="true"></div>
@@ -284,13 +297,16 @@
                         <span class="msg-meta">10:41:34</span>
                       </div>
 
+                      <!-- the action belongs to the lead he was just handed,
+                           so it sits under that message and lands before his
+                           reply: notified, then confirms, then "On it." -->
+                      <div class="confirm-wrap" id="a-confirm">
+                        <button class="btn-confirm" id="btn-confirm" type="button" tabindex="-1">Confirm Contact</button>
+                      </div>
+
                       <div class="msg out" id="a-karim">
                         <p>On it.</p>
                         <span class="msg-meta">10:41:38<i class="read">read</i></span>
-                      </div>
-
-                      <div class="confirm-wrap" id="a-confirm">
-                        <button class="btn-confirm" id="btn-confirm" type="button" tabindex="-1">Confirm Contact</button>
                       </div>
 
                       <!-- Act 4 — the booking request reaches Karim -->
