@@ -584,7 +584,8 @@ mm.add('(prefers-reduced-motion: reduce)', () => {
   const col    = document.getElementById('decay-col');
   const stage  = document.getElementById('hero-stage');
   const glow   = document.getElementById('decay-glow');
-  const nudge  = document.getElementById('decay-nudge');
+  const reply  = document.getElementById('dc-reply');
+  const replyLabel = document.getElementById('dc-reply-label');
   const dot    = document.getElementById('dc-dot');
   const chan   = document.querySelector('.dc-chan');
   const ago    = document.getElementById('dc-ago');
@@ -632,7 +633,7 @@ mm.add('(prefers-reduced-motion: reduce)', () => {
     gsap.set(wrap, { x: 0, scale: 1, clearProps: 'filter' });
     gsap.set(card, { boxShadow: 'var(--lift-1)', filter: 'saturate(.72)', scale: 1, y: 0 });
     gsap.set(glow, { autoAlpha: 0 });
-    gsap.set(nudge, { autoAlpha: 0 });
+    gsap.set(reply, { autoAlpha: 0 });
     gsap.set(typing, { autoAlpha: 0 });
     gsap.set(excuse, { autoAlpha: 0 });
     gsap.set([PW, QW], { y: '0%' });
@@ -727,7 +728,7 @@ mm.add('(prefers-reduced-motion: reduce)', () => {
     .to(PW, { y: '0%', duration: .8, ease: 'power3.out', stagger: .035 }, .25)
     .to(QW, { y: '0%', duration: .62, ease: 'power3.out', stagger: .014 }, 1.35);
 
-  /* ====================== the nudge and the excuses ====================== */
+  /* =================== the reply affordance and excuses ================== */
   /* Clicking never pauses the clock. Both paths land on the same end state. */
   const EXCUSES = [
     'Oops — you’re on a call. Try again in a sec.',
@@ -736,18 +737,40 @@ mm.add('(prefers-reduced-motion: reduce)', () => {
   const CLICK_CAP = EXCUSES.length;   /* 2 — one reads as a glitch, three as a bit */
   let clicks = 0, done = false;
 
-  const nudgeTl = gsap.timeline({ paused: true, repeat: -1, repeatDelay: .9 });
-  nudgeTl.fromTo(nudge, { autoAlpha: .85, scale: .985 },
-    { autoAlpha: 0, scale: 1.045, duration: 1.15, ease: 'power2.out' });
+  if (window.matchMedia('(pointer: coarse)').matches) replyLabel.textContent = 'Tap to reply';
 
-  const killNudge = () => { nudgeTl.pause(); gsap.set(nudge, { autoAlpha: 0 }); };
-  /* the affordance goes the moment the sequence reaches "Waiting…" */
-  gsap.delayedCall(1.5, () => { if (!done && !clicks) nudgeTl.play(); });
-  decay.call(killNudge, null, 2.2);
+  let retired = false;
 
-  card.addEventListener('click', () => {
-    if (done || clicks >= CLICK_CAP) return;      /* a third click does nothing */
-    killNudge();
+  /* The pill travels up into place — it never fades in. The CSS sonar ping
+     does the signalling; this only handles arrival, retirement and press. */
+  const showReply = () => {
+    if (done || retired) return;
+    gsap.fromTo(reply, { autoAlpha: 0, y: 16, scale: .9 },
+      { autoAlpha: 1, y: 0, scale: 1, duration: .42, ease: 'back.out(1.9)' });
+  };
+
+  const retireReply = () => {
+    if (retired) return;
+    retired = true;
+    gsap.killTweensOf(reply);
+    gsap.to(reply, { autoAlpha: 0, y: 10, scale: .92, duration: .28, ease: 'power2.in' });
+  };
+
+  /* a popup still hanging around as "Likely gone." lands muddies the beat */
+  const clearExcuse = () => {
+    if (gsap.getProperty(excuse, 'opacity') === 0) return;
+    gsap.killTweensOf(excuse);
+    gsap.to(excuse, { autoAlpha: 0, y: -10, scale: .94, duration: .26, ease: 'power2.in' });
+  };
+
+  gsap.delayedCall(1.5, showReply);
+  /* it retires exactly when the lead is declared gone — past that there is
+     nothing left to reply to, which is the point the hero is making */
+  decay.call(retireReply, null, 4.75);
+  decay.call(clearExcuse, null, 5.05);
+
+  function excuseOnce() {
+    if (done || retired || clicks >= CLICK_CAP) return;  /* a third click does nothing */
     const text = EXCUSES[clicks];
     clicks += 1;
     excuse.textContent = text;
@@ -757,7 +780,12 @@ mm.add('(prefers-reduced-motion: reduce)', () => {
       .fromTo(excuse, { autoAlpha: 0, y: 14, scale: .88 },
         { autoAlpha: 1, y: 0, scale: 1, duration: .34, ease: 'back.out(2.2)' })
       .to(excuse, { autoAlpha: 0, y: -10, scale: .94, duration: .3, ease: 'power2.in' }, '+=2.0');
-  });
+    /* once both excuses are spent the affordance simply disappears */
+    if (clicks >= CLICK_CAP) gsap.delayedCall(.5, retireReply);
+  }
+
+  reply.addEventListener('click', excuseOnce);
+  card.addEventListener('click', excuseOnce);   /* the card stays clickable too */
 
   /* ============================ safety rule ============================== */
   /* Scroll at any point — mid-fade, mid-click, mid-anything — snaps straight
@@ -765,10 +793,9 @@ mm.add('(prefers-reduced-motion: reduce)', () => {
   function resolveNow() {
     if (done) return;
     done = true;
-    killNudge();
-    nudgeTl.kill();
+    retired = true;
     breath.kill();
-    gsap.killTweensOf([excuse, typing, card, glow, wrap]);
+    gsap.killTweensOf([excuse, typing, card, glow, wrap, reply]);
     decay.pause().kill();
     copy.pause().kill();
     setResolved();

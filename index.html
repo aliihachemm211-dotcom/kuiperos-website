@@ -40,7 +40,6 @@
 
             <!-- ambient breath: a slow glow behind the card, not a UI element -->
             <div class="decay-glow" id="decay-glow" aria-hidden="true"></div>
-            <div class="decay-nudge" id="decay-nudge" aria-hidden="true"></div>
 
             <article class="decay-card" id="decay-card">
               <div class="dc-top">
@@ -58,6 +57,16 @@
 
             <!-- a reply being drafted, then abandoned unsent -->
             <div class="dc-typing" id="dc-typing" aria-hidden="true"><i></i><i></i><i></i></div>
+
+            <!-- the signposted way in: pulses until the lead is declared gone -->
+            <button class="dc-reply" id="dc-reply" type="button">
+              <span class="dc-reply-ping" aria-hidden="true"></span>
+              <svg class="dc-reply-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M10 8.5V4.5L3 11.5l7 7v-4.1c4.4 0 7.4 1.4 9 4.6 0-6.1-3-10.5-9-10.5z"/>
+              </svg>
+              <span class="dc-reply-label" id="dc-reply-label">Click to reply</span>
+            </button>
 
             <div class="dc-excuse" id="dc-excuse" aria-hidden="true"></div>
           </div>

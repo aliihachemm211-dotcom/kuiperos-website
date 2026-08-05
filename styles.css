@@ -128,11 +128,46 @@ body {
   filter:blur(6px);
 }
 
-/* nudge affordance — a soft ring, not an icon */
-.decay-nudge {
-  position:absolute; inset:-9px; border-radius:24px; pointer-events:none;
-  border:1.5px solid rgba(21,128,61,.42); opacity:0;
+/* --- the reply affordance ------------------------------------------------
+   Signposted, not subtle: an unlabelled ring doesn't tell anyone what to do.
+   Accent blue is legitimate here — this is an action, not decoration — and
+   the pulse is an affordance, which is why it's exempt from the no-decorative
+   -motion rule. It retires the moment the lead is declared gone.
+-------------------------------------------------------------------------- */
+.dc-reply {
+  position:absolute; right:0; bottom:-54px; z-index:2;
+  display:inline-flex; align-items:center; gap:8px;
+  height:42px; padding:0 19px 0 16px;
+  background:var(--accent); color:#fff; border:0; border-radius:99px;
+  font-family:var(--f-body); font-weight:700; font-size:13.5px; letter-spacing:-.005em;
+  cursor:pointer; opacity:0; white-space:nowrap;
+  box-shadow:0 2px 6px rgba(44,94,255,.18), 0 14px 32px -10px rgba(44,94,255,.44);
+  transition:transform .16s cubic-bezier(.2,.7,.3,1), box-shadow .16s, background-color .16s;
 }
+.dc-reply:hover { background:var(--accent-700); transform:translateY(-1.5px);
+  box-shadow:0 3px 9px rgba(44,94,255,.22), 0 20px 42px -12px rgba(44,94,255,.5); }
+.dc-reply:active { transform:translateY(0) scale(.975); }
+.dc-reply:focus-visible { outline:2.5px solid var(--accent-700); outline-offset:3px; }
+
+.dc-reply-ico { width:14px; height:14px; flex:0 0 14px; }
+.dc-reply-label { position:relative; z-index:1; }
+
+/* sonar ping — box-shadow spread grows uniformly, so it stays a true pill
+   outline rather than stretching horizontally the way scale() would */
+.dc-reply-ping {
+  position:absolute; inset:0; border-radius:99px; pointer-events:none;
+  animation:dc-ping 2.2s cubic-bezier(.22,.61,.36,1) infinite;
+}
+@keyframes dc-ping {
+  0%   { box-shadow:0 0 0 0 rgba(44,94,255,.46); }
+  62%  { box-shadow:0 0 0 15px rgba(44,94,255,0); }
+  100% { box-shadow:0 0 0 0 rgba(44,94,255,0); }
+}
+/* once it's been found, stop signalling */
+.dc-reply:hover .dc-reply-ping,
+.dc-reply:focus-visible .dc-reply-ping { animation-play-state:paused; }
+
+@media (prefers-reduced-motion:reduce) { .dc-reply-ping { animation:none; } }
 
 /* --- the card: the incoming-message language of the thread it belongs to --- */
 .decay-card {
@@ -790,7 +825,8 @@ body {
    card stays first in flow, so the decay still reads as Act 0 on mobile. */
 @media (max-width:1024px) {
   .hero-stage { grid-template-columns:minmax(0,1fr); gap:clamp(34px,6vh,58px); }
-  .decay-col { width:min(100%,404px); }
+  /* stacked, the reply pill would land on the copy — reserve its space */
+  .decay-col { width:min(100%,404px); padding-bottom:58px; }
   .hr-punch { max-width:19ch; }
 }
 @media (max-width:880px) { .head-tagline { display:none; } }
