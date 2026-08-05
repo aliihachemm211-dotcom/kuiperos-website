@@ -240,6 +240,81 @@ body {
 .wm > span { display:inline-block; will-change:transform; }
 
 /* ---------------------------------------------------------------------------
+   Bridge — hero → demo
+
+   Deliberately centred, where the hero is asymmetric: the visitor should feel
+   the page settle before the walkthrough starts. Three lines, crescendo then
+   handoff — reframe, resolution, pivot.
+--------------------------------------------------------------------------- */
+
+.bridge {
+  padding:26vh var(--page-x) 18vh; position:relative; z-index:3;
+}
+.bridge-inner { max-width:1000px; margin:0 auto; text-align:center; }
+
+.bl { margin:0 auto; }
+
+/* the negation recedes so the correction carries the line */
+.bl-reframe {
+  font-family:var(--f-display); font-weight:700;
+  font-size:clamp(24px,2.85vw,42px); line-height:1.16; letter-spacing:-.026em;
+  max-width:26ch;
+}
+/* the negation gets its own line so the correction lands as a correction */
+.bl-clause { display:block; text-wrap:balance; }
+.bl-clause + .bl-clause { margin-top:.22em; }
+.bl-soft { color:var(--mute); }
+.bl-hard { color:var(--ink); }
+
+/* the "it's handled" beat — the largest thing in the section */
+.bl-resolve {
+  margin-top:clamp(30px,5.5vh,64px);
+  font-family:var(--f-display); font-weight:700; color:var(--ink);
+  font-size:clamp(32px,4.3vw,62px); line-height:1.04; letter-spacing:-.033em;
+  max-width:21ch; text-wrap:balance;
+}
+
+/* a stage direction, not a headline */
+.bl-pivot {
+  margin-top:clamp(24px,4vh,44px); color:var(--mute);
+  font-size:clamp(15.5px,1.3vw,19px); line-height:1.5;
+}
+
+/* --- scroll cue: says what to do and what's coming --- */
+.bridge-cue {
+  margin-top:clamp(52px,9vh,110px);
+  display:inline-flex; flex-direction:column; align-items:center; gap:14px;
+  color:var(--mute);
+}
+/* an instruction the visitor has to actually notice, so a step up from the
+   in-app labels (9.5px) it shares a style family with */
+.cue-label {
+  font-family:var(--f-mono); font-size:12px; letter-spacing:.2em;
+  text-transform:uppercase;
+}
+.cue-arrow { width:21px; height:21px; }
+
+/* ---------------------------------------------------------------------------
+   Skip demo — present only while the demo is
+--------------------------------------------------------------------------- */
+
+.skip-demo {
+  position:fixed; right:var(--page-x); bottom:28px; z-index:55;
+  display:inline-flex; align-items:center; gap:8px;
+  height:38px; padding:0 15px;
+  background:#fff; color:var(--ink);
+  border:1px solid var(--line); border-radius:99px;
+  font-family:var(--f-body); font-weight:700; font-size:13px; letter-spacing:-.004em;
+  cursor:pointer; opacity:0;
+  box-shadow:var(--lift-1);
+  transition:border-color .16s, transform .16s cubic-bezier(.2,.7,.3,1), box-shadow .16s;
+}
+.skip-demo[hidden] { display:none; }
+.skip-demo svg { width:14px; height:14px; opacity:.55; }
+.skip-demo:hover { border-color:var(--mute); transform:translateY(-1px); box-shadow:var(--lift-2); }
+.skip-demo:focus-visible { outline:2.5px solid var(--accent); outline-offset:3px; }
+
+/* ---------------------------------------------------------------------------
    Stage
 --------------------------------------------------------------------------- */
 

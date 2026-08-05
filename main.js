@@ -459,6 +459,11 @@ mm.add('(prefers-reduced-motion: no-preference)', () => {
       duration: INV_D * .8
     }, INV)
     .to('.app-user', { backgroundColor: 'rgba(44,94,255,.22)', color: '#C9D6FF', duration: INV_D * .8 }, INV)
+    /* the skip pill rides the inversion too, or it goes blind on ink */
+    .to('.skip-demo', {
+      backgroundColor: '#211F1E', color: '#F2F0ED', borderColor: '#3C3A37',
+      duration: INV_D * .8
+    }, INV)
     /* keep the machine readable once the page is as dark as its bezel */
     .to('.ambient', { opacity: 1.6, duration: INV_D * .8 }, INV);
 
@@ -480,6 +485,9 @@ mm.add('(prefers-reduced-motion: no-preference)', () => {
     .to('#pagelight', { opacity: 1, duration: .48 }, OUT)
     .to('.site-header', { backgroundColor: 'rgba(250,249,247,.78)', borderBottomColor: '#E8E5E0', duration: .48 }, OUT)
     .to('.wordmark', { color: '#1A1917', duration: .48 }, OUT)
+    .to('.skip-demo', {
+      backgroundColor: '#FFFFFF', color: '#1A1917', borderColor: '#E8E5E0', duration: .48
+    }, OUT)
     .to('.ambient', { opacity: 1, duration: .48 }, OUT);
 
   /* the machine travels away from the camera */
@@ -563,6 +571,30 @@ mm.add('(prefers-reduced-motion: reduce)', () => {
   return () => document.body.classList.remove('reduced');
 });
 
+/* ---------------------------------------------------------------------------
+   Word masks — copy travels in, it never fades in. Shared by the hero's
+   resolution lines and the bridge. Preserves one level of inline markup, so
+   the bridge's reframe line can mark its two clauses differently.
+--------------------------------------------------------------------------- */
+function splitWords(el) {
+  const parts = [];
+  el.childNodes.forEach(node => {
+    const cls = node.nodeType === 3 ? null : node.className;
+    node.textContent.split(/\s+/).filter(Boolean).forEach(w => parts.push({ w, cls }));
+  });
+  el.textContent = '';
+  return parts.map((p, i) => {
+    const mask = document.createElement('span');
+    mask.className = 'wm' + (p.cls ? ' ' + p.cls : '');
+    const inner = document.createElement('span');
+    inner.textContent = p.w;
+    mask.appendChild(inner);
+    el.appendChild(mask);
+    if (i < parts.length - 1) el.appendChild(document.createTextNode(' '));
+    return inner;
+  });
+}
+
 /* ===========================================================================
    HERO — Act 0. Rania's inquiry, cooling off in real time.
 
@@ -602,21 +634,6 @@ mm.add('(prefers-reduced-motion: reduce)', () => {
     return 'rgba(' + (n >> 16) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
   };
 
-  /* --- word masks: the copy travels in, it never fades in ----------------- */
-  function splitWords(el) {
-    const words = el.textContent.split(' ');
-    el.textContent = '';
-    return words.map((w, i) => {
-      const mask = document.createElement('span');
-      mask.className = 'wm';
-      const inner = document.createElement('span');
-      inner.textContent = w;
-      mask.appendChild(inner);
-      el.appendChild(mask);
-      if (i < words.length - 1) el.appendChild(document.createTextNode(' '));
-      return inner;
-    });
-  }
   const PW = splitWords(punch);
   const QW = splitWords(quiet);
 
@@ -821,6 +838,112 @@ mm.add('(prefers-reduced-motion: reduce)', () => {
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(recentre);
 
   decay.play();
+})();
+
+/* ===========================================================================
+   BRIDGE — the reframe, the resolution, the pivot, then the handoff.
+
+   The hero ends on tension; this is where it resolves. Three lines arriving
+   in sequence as the visitor scrolls, then a cue that says both what to do
+   and what's coming.
+=========================================================================== */
+(function bridge() {
+  const l1a = document.getElementById('bl-1a');
+  const l1b = document.getElementById('bl-1b');
+  const l2 = document.getElementById('bl-2');
+  const l3 = document.getElementById('bl-3');
+  const cue = document.getElementById('bridge-cue');
+  const arrow = document.getElementById('cue-arrow');
+  if (!l1a || !l2 || !l3) return;
+
+  /* both clauses rise as one beat, so the correction reads as part of the
+     same thought rather than a second line arriving late */
+  const W1 = splitWords(l1a).concat(splitWords(l1b));
+  const W2 = splitWords(l2);
+
+  if (REDUCED) {
+    gsap.set([W1, W2], { y: '0%' });
+    gsap.set([l3, cue], { autoAlpha: 1, y: 0 });
+    return;
+  }
+
+  gsap.set([W1, W2], { y: '105%' });
+  gsap.set([l3, cue], { autoAlpha: 0, y: 18 });
+
+  /* each line waits for the visitor rather than firing all at once — the
+     section's job is three separate beats, not one block of text */
+  const rise = (words, trigger, stagger) => ScrollTrigger.create({
+    trigger, start: 'top 84%', once: true,
+    onEnter: () => gsap.to(words, {
+      y: '0%', duration: .78, ease: 'power3.out', stagger
+    })
+  });
+  rise(W1, l1a, .028);
+  rise(W2, l2, .034);
+
+  [l3, cue].forEach((el, i) => ScrollTrigger.create({
+    trigger: i === 0 ? l3 : cue, start: 'top 88%', once: true,
+    onEnter: () => gsap.to(el, { autoAlpha: 1, y: 0, duration: .6, ease: 'power3.out' })
+  }));
+
+  /* a slow bob, to make the instruction read as an instruction */
+  gsap.to(arrow, {
+    y: 7, duration: 1.5, ease: 'sine.inOut', repeat: -1, yoyo: true
+  });
+})();
+
+/* ===========================================================================
+   SKIP DEMO — a way out during the demo, not a choice before it.
+
+   Bound to the span between the sequence pinning and the CTA arriving, so it
+   is independent of the act count and survives the act restructure.
+=========================================================================== */
+(function skipDemo() {
+  const pill = document.getElementById('skip-demo');
+  const seq = document.getElementById('sequence');
+  const signup = document.getElementById('signup');
+  if (!pill || !seq || !signup) return;
+
+  pill.hidden = false;
+  gsap.set(pill, { autoAlpha: 0, y: 12, pointerEvents: 'none' });
+
+  let shown = false;
+  const show = () => {
+    if (shown) return;
+    shown = true;
+    gsap.to(pill, { autoAlpha: 1, y: 0, duration: .4, ease: 'power3.out', pointerEvents: 'auto' });
+  };
+  const hide = () => {
+    if (!shown) return;
+    shown = false;
+    gsap.to(pill, { autoAlpha: 0, y: 12, duration: .28, ease: 'power2.in', pointerEvents: 'none' });
+  };
+
+  /* Measured live rather than via endTrigger. An endTrigger on #signup reads
+     its position before the pinned sequence inserts its pin-spacer, so the
+     endpoint collapses onto the start and the range is never active — and
+     refreshPriority doesn't fix it, because the pin lives in its own
+     matchMedia context that refreshes separately. Re-measuring on every
+     ScrollTrigger refresh sidesteps the ordering problem entirely. */
+  let startY = 0, endY = 0;
+
+  const measure = () => {
+    const s = ScrollTrigger.getById('seq');
+    startY = s ? s.start : seq.getBoundingClientRect().top + window.scrollY;
+    /* gone by the time the CTA is genuinely on screen, not at its first pixel */
+    endY = signup.getBoundingClientRect().top + window.scrollY - window.innerHeight * .55;
+  };
+  const update = () => {
+    const y = window.scrollY;
+    (y >= startY && y < endY) ? show() : hide();
+  };
+
+  ScrollTrigger.addEventListener('refresh', () => { measure(); update(); });
+  window.addEventListener('scroll', update, { passive: true });
+  measure();
+  update();
+
+  pill.addEventListener('click', () => { hide(); goToSignup(); });
 })();
 
 /* ---------------------------------------------------------------------------
