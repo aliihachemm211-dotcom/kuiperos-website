@@ -16,6 +16,8 @@
 </head>
 <body>
 
+  <div class="pagelight" id="pagelight" aria-hidden="true"></div>
+
   <header class="site-header">
     <span class="wordmark">kuiper.</span>
     <button class="btn-cta" type="button">Request early access</button>
@@ -125,6 +127,20 @@
                         <button class="btn-interest" type="button" tabindex="-1">I am interested in this Property</button>
                       </div>
 
+                      <!-- Act 4 — the calendar arrives in the thread -->
+                      <div class="msg out cal-msg" id="m-cal">
+                        <div class="form-head">AVAILABLE VIEWING SLOTS</div>
+                        <div class="cal-grid">
+                          <span class="cal-slot">Thu 10:00</span>
+                          <span class="cal-slot">Thu 14:30</span>
+                          <span class="cal-slot">Fri 09:00</span>
+                          <span class="cal-slot" id="slot-pick">Fri 11:30</span>
+                          <span class="cal-slot">Sat 10:00</span>
+                          <span class="cal-slot">Sat 15:00</span>
+                        </div>
+                        <span class="msg-meta">10:52:04&ensp;·&ensp;AUTO<i class="read">read</i></span>
+                      </div>
+
                     </div>
                   </div>
 
@@ -199,6 +215,20 @@
                         <button class="btn-confirm" id="btn-confirm" type="button" tabindex="-1">Confirm Contact</button>
                       </div>
 
+                      <!-- Act 4 — the booking request reaches Karim -->
+                      <div class="msg in book-msg" id="a-book">
+                        <div class="lead-card">
+                          <span class="lc-head">VIEWING REQUEST · Fri 11:30</span>
+                          <span class="lc-row">Rania K. wants to view Achrafieh-014</span>
+                        </div>
+                        <div class="book-actions">
+                          <button class="btn-confirm sm" id="btn-book" type="button" tabindex="-1">Confirm</button>
+                          <button class="btn-ghost" type="button" tabindex="-1">Propose new time</button>
+                          <button class="btn-ghost" type="button" tabindex="-1">Reject</button>
+                        </div>
+                        <span class="msg-meta">10:52:11</span>
+                      </div>
+
                     </div>
                   </div>
 
@@ -206,6 +236,33 @@
                     <span class="composer-field">Message</span><span class="composer-send"></span>
                   </footer>
                 </section>
+              </div>
+
+              <!-- ============ PIPELINE ============ -->
+              <div class="panel panel-solo" id="panel-pipeline" data-panel="pipeline">
+                <div class="pipe-wrap">
+                  <div class="pipe-top">
+                    <span class="pipe-title">Opportunities</span>
+                    <span class="pipe-sub">All pipelines</span>
+                  </div>
+                  <div class="kanban" id="kanban"></div>
+                </div>
+              </div>
+
+              <!-- ============ CONTROL ROOM ============ -->
+              <div class="panel panel-solo" id="panel-control" data-panel="control">
+                <div class="ctrl-wrap">
+                  <span class="ctrl-head">WEEKLY LEDGER</span>
+                  <p class="ctrl-aggregate">32 leads assigned · 7 viewings booked · 18 contacted</p>
+                  <div class="ctrl-rows">
+                    <div class="ctrl-row"><span class="ctrl-name">Karim</span><span class="ctrl-stat">6 contacted · 2 confirmed</span></div>
+                    <div class="ctrl-row"><span class="ctrl-name">Dana</span><span class="ctrl-stat">4 contacted · 3 confirmed</span></div>
+                    <div class="ctrl-row"><span class="ctrl-name">Sami</span><span class="ctrl-stat">5 contacted · 1 confirmed</span></div>
+                    <div class="ctrl-row"><span class="ctrl-name">Rima</span><span class="ctrl-stat">7 contacted · 2 confirmed</span></div>
+                    <div class="ctrl-row"><span class="ctrl-name">Georges</span><span class="ctrl-stat">3 contacted · 1 confirmed</span></div>
+                    <div class="ctrl-row"><span class="ctrl-name">Nour</span><span class="ctrl-stat">4 contacted · 2 confirmed</span></div>
+                  </div>
+                </div>
               </div>
 
               <div class="cursor" id="cursor" aria-hidden="true">

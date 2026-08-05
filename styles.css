@@ -58,13 +58,7 @@ body {
   overflow-x:hidden;
 }
 
-/* warm paper light — never a photograph */
-body::before {
-  content:''; position:fixed; inset:0; pointer-events:none; z-index:1;
-  background:
-    radial-gradient(130% 80% at 50% -10%, rgba(255,255,255,.7) 0%, rgba(255,255,255,0) 55%),
-    radial-gradient(100% 70% at 50% 108%, rgba(26,25,23,.05) 0%, rgba(26,25,23,0) 60%);
-}
+/* warm paper light lives in .pagelight so the inversion can scrub it out */
 
 /* ---------------------------------------------------------------------------
    Page header
@@ -179,20 +173,23 @@ body::before {
    App chrome
 --------------------------------------------------------------------------- */
 
+/* tab colours come from variables on the bar so the Control Room inversion
+   can scrub them without fighting the .is-active class */
 .appbar {
   height:60px; display:flex; align-items:center; gap:34px;
   padding:0 22px; background:#fff; border-bottom:1px solid var(--line);
   position:relative; z-index:5;
+  --tab-idle:#6E6B66; --tab-active:#1A1917; --mark:#1A1917;
 }
-.app-mark { font-family:var(--f-display); font-size:19px; letter-spacing:-.02em; }
+.app-mark { font-family:var(--f-display); font-size:19px; letter-spacing:-.02em; color:var(--mark); }
 
 .tabs { display:flex; align-items:center; gap:4px; position:relative; height:100%; }
 .tab {
   height:100%; padding:0 14px; border:0; background:none; cursor:default;
-  font-family:var(--f-body); font-size:13.5px; color:var(--mute);
+  font-family:var(--f-body); font-size:13.5px; color:var(--tab-idle);
   letter-spacing:.005em; position:relative;
 }
-.tab.is-active { color:var(--ink); font-weight:700; }
+.tab.is-active { color:var(--tab-active); font-weight:700; }
 .tab-underline {
   position:absolute; bottom:-1px; left:0; height:2px; width:0;
   background:var(--accent); border-radius:2px;
@@ -486,6 +483,102 @@ body::before {
 }
 
 /* ---------------------------------------------------------------------------
+   Act 4 — the calendar in the thread, and the booking request
+--------------------------------------------------------------------------- */
+
+.cal-msg { width:392px; max-width:392px; padding:16px 18px 13px; }
+.cal-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:13px; }
+.cal-slot {
+  height:46px; display:flex; align-items:center; justify-content:center;
+  background:#fff; border:1px solid var(--accent-200); border-radius:8px;
+  font-family:var(--f-mono); font-size:11.5px; letter-spacing:.03em; color:var(--ink);
+}
+
+.book-msg { width:392px; max-width:392px; }
+.book-actions { display:flex; gap:7px; margin-top:11px; }
+.btn-confirm.sm { height:34px; padding:0 18px; font-size:12.5px; border-radius:7px; }
+.btn-ghost {
+  height:34px; padding:0 13px; border-radius:7px;
+  background:transparent; border:1px solid var(--line); color:var(--mute);
+  font-family:var(--f-body); font-size:12.5px; cursor:default;
+}
+
+/* ---------------------------------------------------------------------------
+   Pipeline — a real Opportunities board (GHL structure, kuiper identity)
+--------------------------------------------------------------------------- */
+
+.pipe-wrap { height:100%; display:flex; flex-direction:column; padding:22px 26px 0; }
+.pipe-top { display:flex; align-items:baseline; gap:14px; margin-bottom:18px; }
+.pipe-title { font-family:var(--f-display); font-size:24px; letter-spacing:-.025em; }
+.pipe-sub { font-family:var(--f-mono); font-size:10px; letter-spacing:.16em; color:var(--mute); }
+
+.kanban { flex:1; min-height:0; display:grid; grid-template-columns:repeat(6,1fr); gap:10px; }
+.kcol {
+  background:#F4F2EF; border:1px solid var(--line); border-radius:10px;
+  padding:11px 9px; overflow:hidden; display:flex; flex-direction:column;
+}
+.kcol-head {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 4px 9px; margin-bottom:8px; border-bottom:1px solid var(--line);
+  font-family:var(--f-mono); font-size:8.5px; letter-spacing:.16em; color:var(--mute);
+}
+.kcol-n { color:#A9A49D; }
+
+.kcard {
+  background:#fff; border:1px solid var(--line); border-radius:8px;
+  padding:9px 10px; margin-bottom:7px; position:relative;
+  box-shadow:0 1px 2px rgba(26,25,23,.04);
+}
+.kcard-name { display:block; font-size:11.5px; font-weight:700; letter-spacing:-.005em; }
+.kcard-val { display:block; font-family:var(--f-mono); font-size:9.5px; color:var(--mute); margin-top:3px; }
+.kcard-tag {
+  display:inline-block; margin-top:7px; padding:2px 6px; border-radius:3px;
+  background:#F1EEE9; color:var(--mute);
+  font-family:var(--f-mono); font-size:7.5px; letter-spacing:.12em;
+}
+/* drag affordance only — the grip reads as "this card moves between columns" */
+.kcard-grip {
+  position:absolute; top:9px; right:8px; width:9px; height:9px; opacity:.35;
+  background:
+    radial-gradient(circle, var(--mute) 1px, transparent 1px) 0 0/4.5px 4.5px;
+}
+.kcard.is-lead {
+  background:var(--accent); border-color:#7E9BFF;
+  box-shadow:0 0 0 1px rgba(126,155,255,.55), 0 8px 22px -6px rgba(44,94,255,.55);
+}
+.kcard.is-lead .kcard-name { color:#fff; }
+.kcard.is-lead .kcard-val { color:rgba(255,255,255,.8); }
+.kcard.is-lead .kcard-tag { background:rgba(255,255,255,.2); color:#fff; }
+.kcard.is-lead .kcard-grip { opacity:.5; background-image:radial-gradient(circle,#fff 1px,transparent 1px); }
+
+/* ---------------------------------------------------------------------------
+   Control Room — the one tonal inversion
+--------------------------------------------------------------------------- */
+
+#panel-control { background:var(--ink); }
+.ctrl-wrap { height:100%; padding:52px 60px; display:flex; flex-direction:column; justify-content:center; }
+.ctrl-head { font-family:var(--f-mono); font-size:10.5px; letter-spacing:.24em; color:#8A867F; }
+.ctrl-aggregate {
+  margin-top:20px; font-family:var(--f-display); font-size:41px; line-height:1.16;
+  letter-spacing:-.03em; color:#F7F5F2; max-width:22ch;
+}
+.ctrl-rows { margin-top:40px; border-top:1px solid var(--line-dark); }
+.ctrl-row {
+  display:flex; align-items:baseline; justify-content:space-between;
+  padding:14px 2px; border-bottom:1px solid rgba(60,58,55,.7);
+}
+.ctrl-name { font-size:15px; color:#EDEAE5; }
+.ctrl-stat { font-family:var(--f-mono); font-size:11.5px; letter-spacing:.05em; color:#8A867F; }
+
+/* page light, tweened out on inversion */
+.pagelight {
+  position:fixed; inset:0; pointer-events:none; z-index:1;
+  background:
+    radial-gradient(130% 80% at 50% -10%, rgba(255,255,255,.7) 0%, rgba(255,255,255,0) 55%),
+    radial-gradient(100% 70% at 50% 108%, rgba(26,25,23,.05) 0%, rgba(26,25,23,0) 60%);
+}
+
+/* ---------------------------------------------------------------------------
    Cursor
 --------------------------------------------------------------------------- */
 
@@ -548,4 +641,15 @@ body.reduced .cursor { display:none; }
 body.reduced .msg,
 body.reduced .stamp { opacity:1 !important; visibility:visible !important; transform:none !important; }
 body.reduced .narration-line .w { opacity:1 !important; transform:none !important; filter:none !important; }
+/* the captions are a stack of absolute layers in motion; still, they read as
+   the narration in order */
+body.reduced .narration-stack { min-height:0; display:flex; flex-direction:column; gap:14px; }
+body.reduced .narration-line { position:static; }
 body.reduced .fbox.is-focus { box-shadow:none; }
+body.reduced .cal-slot.is-picked { background:var(--accent); border-color:var(--accent); color:var(--paper); }
+body.reduced #panel-control { border-radius:12px; }
+body.reduced .kcard,
+body.reduced .ctrl-head,
+body.reduced .ctrl-aggregate,
+body.reduced .ctrl-row,
+body.reduced .lrow-win-inner { opacity:1 !important; visibility:visible !important; transform:none !important; }

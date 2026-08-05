@@ -38,19 +38,27 @@ const inAgent = document.getElementById('thread-agent-inner');
 const PANEL = {
   inbox: document.getElementById('panel-inbox'),
   matching: document.getElementById('panel-matching'),
-  agent: document.getElementById('panel-agent')
+  agent: document.getElementById('panel-agent'),
+  pipeline: document.getElementById('panel-pipeline'),
+  control: document.getElementById('panel-control')
 };
 const TABEL = {};
 document.querySelectorAll('.tab').forEach(t => TABEL[t.dataset.tab] = t);
-const TAB_LABEL = { inbox: 'INBOX', matching: 'MATCHING', agent: 'AGENT DESK' };
+const TAB_LABEL = {
+  inbox: 'INBOX', matching: 'MATCHING', agent: 'AGENT DESK',
+  pipeline: 'PIPELINE', control: 'CONTROL ROOM'
+};
 
 const SCREEN_W = 1240, SCREEN_H = 780;
 
-/* Section 8.3 — narration captions, verbatim */
+/* Section 8.3 — narration captions, verbatim. The Control Room line carries
+   the whole final beat, Pipeline included (8.9). */
 const CAPTIONS = [
   'A message arrives at 10:41am. In thirty seconds, the lead is qualified — not just logged.',
   'Eighty-four listings. Only three match this inquiry. The matching engine does the rest.',
-  'The agent is assigned with a click, and pinged instantly.'
+  'The agent is assigned with a click, and pinged instantly.',
+  'The lead picks from the available slots. The agent confirms with a click.',
+  'This is one thread. Forty-two others are running the same way, right now.'
 ];
 
 /* Section 8.4 — demo data, in the field order given by 8.5 */
@@ -106,6 +114,61 @@ function buildLedger() {
   body.appendChild(frag);
 }
 buildLedger();
+
+/* ---------------------------------------------------------------------------
+   The Pipeline board. Section 5: GHL Opportunities structure — contact name,
+   value figure, stage tag, drag affordance. Section 8.9 licenses invented
+   client names for these background cards, and only for these.
+--------------------------------------------------------------------------- */
+const PIPE_COLS = [
+  { name: 'New',       n: 7 },
+  { name: 'Qualified', n: 6 },
+  { name: 'Matched',   n: 6, lead: true },
+  { name: 'Assigned',  n: 6 },
+  { name: 'Contacted', n: 6 },
+  { name: 'Confirmed', n: 5 }
+];
+const CLIENTS = [
+  'Nadia H.', 'Marc B.', 'Layla S.', 'Tarek A.', 'Joelle N.', 'Ziad M.', 'Maya F.',
+  'Rami T.', 'Carine D.', 'Elie G.', 'Nour S.', 'Hadi Z.', 'Yara C.', 'Fadi R.',
+  'Lea P.', 'Omar J.', 'Rita B.', 'Sarah W.', 'Georges A.', 'Mona K.', 'Bilal H.',
+  'Tala R.', 'Nabil S.', 'Perla M.', 'Wissam D.', 'Aline T.', 'Jad F.', 'Reem A.',
+  'Kamal N.', 'Sandra L.', 'Hiba Y.', 'Michel C.', 'Dalia E.', 'Samir O.', 'Rana B.',
+  'Charbel K.', 'Amal D.', 'Nizar F.', 'Salma A.', 'Roy H.', 'Farah T.'
+];
+
+function buildKanban() {
+  const board = document.getElementById('kanban');
+  if (!board || board.childElementCount) return;
+  let c = 0;
+  PIPE_COLS.forEach(col => {
+    const el = document.createElement('div');
+    el.className = 'kcol';
+    el.innerHTML = '<div class="kcol-head"><span>' + col.name.toUpperCase() +
+      '</span><span class="kcol-n">' + col.n + '</span></div>';
+    if (col.lead) {
+      const lead = document.createElement('div');
+      lead.className = 'kcard is-lead';
+      lead.id = 'lead-card';
+      lead.innerHTML = '<span class="kcard-grip"></span><span class="kcard-name">RANIA K.</span>' +
+        '<span class="kcard-val">THREAD-0417 · $180,000</span>' +
+        '<span class="kcard-tag">' + col.name.toUpperCase() + '</span>';
+      el.appendChild(lead);
+    }
+    for (let i = 0; i < col.n; i++) {
+      const card = document.createElement('div');
+      card.className = 'kcard';
+      const v = 95 + ((c * 37) % 240);
+      card.innerHTML = '<span class="kcard-grip"></span><span class="kcard-name">' +
+        CLIENTS[c % CLIENTS.length] + '</span><span class="kcard-val">$' + v + ',000</span>' +
+        '<span class="kcard-tag">' + col.name.toUpperCase() + '</span>';
+      el.appendChild(card);
+      c++;
+    }
+    board.appendChild(el);
+  });
+}
+buildKanban();
 
 /* --------------------------------------------------------------------------- */
 
@@ -165,7 +228,10 @@ mm.add('(prefers-reduced-motion: no-preference)', () => {
   /* --- base state --- */
   gsap.set(screenEl, { backgroundColor: '#0F0E0D' });
   gsap.set([appbar, PANEL.inbox], { autoAlpha: 0, scale: .965, filter: 'blur(9px)', y: 14 });
-  gsap.set([PANEL.matching, PANEL.agent], { autoAlpha: 0, scale: 1.07, filter: 'blur(9px)' });
+  gsap.set([PANEL.matching, PANEL.agent, PANEL.pipeline, PANEL.control],
+    { autoAlpha: 0, scale: 1.07, filter: 'blur(9px)' });
+  gsap.set('.kcard', { autoAlpha: 0, y: -12 });
+  gsap.set(['.ctrl-head', '.ctrl-aggregate', '.ctrl-row'], { autoAlpha: 0, y: 20 });
   gsap.set(underline, { x: 0, width: 0 });
   gsap.set(inInbox, { y: () => thInbox.offsetHeight });
   gsap.set(inAgent, { y: () => thAgent.offsetHeight });
@@ -344,7 +410,74 @@ mm.add('(prefers-reduced-motion: no-preference)', () => {
   tl.to(confirm, { scale: .955, duration: .035 }, 10.44)
     .to(confirm, { scale: 1, duration: .05 }, 10.475);
 
-  tl.to({}, { duration: .28 });   /* a beat of rest on the finished frame */
+  /* =====================================================================
+     ACT 4 — the calendar reaches her in the thread; she picks; he confirms
+  ===================================================================== */
+  capOut(2, 10.62);
+  switchTab('inbox', 10.60, .42);
+  capIn(3, 10.86);
+
+  pushIn(thInbox, inInbox, '#m-cal', 11.08, .30, 24);
+
+  const slot = document.getElementById('slot-pick');
+  moveTo(slot, 11.50, .14, 15, -11);
+  click(11.66);
+  tl.to(slot, { scale: .94, duration: .035 }, 11.66)
+    .to(slot, { scale: 1, duration: .05 }, 11.695)
+    /* the picked slot fills solid; the others step back out of contention */
+    .to(slot, { backgroundColor: '#2C5EFF', borderColor: '#2C5EFF', color: '#FAF9F7', duration: .07 }, 11.67)
+    .to('.cal-slot:not(#slot-pick)', { opacity: .32, scale: .975, duration: .12, stagger: .015 }, 11.74)
+    .to(cursor, { x: SCREEN_W + 60, y: SCREEN_H - 60, duration: .2 }, 11.88);
+
+  switchTab('agent', 12.06, .42);
+  pushIn(thAgent, inAgent, '#a-book', 12.54, .30, 24);
+
+  const book = document.getElementById('btn-book');
+  moveTo(book, 12.92, .14, 15, -11);
+  click(13.08);
+  tl.to(book, { scale: .955, duration: .035 }, 13.08)
+    .to(book, { scale: 1, duration: .05 }, 13.115)
+    .to('.book-actions .btn-ghost', { opacity: .32, duration: .08 }, 13.10)
+    .to(cursor, { x: SCREEN_W + 60, y: SCREEN_H - 60, duration: .2 }, 13.20);
+
+  /* =====================================================================
+     ACT 5 — Pipeline first (still Paper), then the Control Room inversion
+  ===================================================================== */
+  capOut(3, 13.42);
+  switchTab('pipeline', 13.40, .42);
+  capIn(4, 13.66);
+
+  /* the board fills: dozens of real opportunities, ours among them */
+  tl.to('.kcard:not(.is-lead)', { autoAlpha: 1, y: 0, duration: .16, stagger: { each: .008 } }, 13.92);
+  tl.fromTo('#lead-card', { autoAlpha: 0, y: -12, scale: .9 },
+    { autoAlpha: 1, y: 0, scale: 1, duration: .2, immediateRender: false }, 14.34)
+    .fromTo('#lead-card', { boxShadow: '0 0 0 1px rgba(126,155,255,.55), 0 8px 22px -6px rgba(44,94,255,.55)' },
+      { boxShadow: '0 0 0 4px rgba(44,94,255,.28), 0 14px 34px -6px rgba(44,94,255,.7)', duration: .16, immediateRender: false }, 14.50);
+
+  /* the one deliberate tonal inversion — and it happens here, not before */
+  const INV = 14.96, INV_D = .5;
+  switchTab('control', INV, INV_D);
+  tl.to('body', { backgroundColor: '#1A1917', duration: INV_D * .8 }, INV)
+    .to('#pagelight', { opacity: 0, duration: INV_D * .6 }, INV)
+    .to(screenEl, { backgroundColor: '#1A1917', duration: INV_D * .8 }, INV)
+    .to('.site-header', { backgroundColor: 'rgba(26,25,23,.78)', borderBottomColor: '#3C3A37', duration: INV_D * .8 }, INV)
+    .to('.wordmark', { color: '#FAF9F7', duration: INV_D * .8 }, INV)
+    .to('.narration-line', { color: '#F2F0ED', duration: INV_D * .8 }, INV)
+    /* the app chrome inverts with the room, tab colours included */
+    .to('.appbar', {
+      backgroundColor: '#211F1E', borderBottomColor: '#3C3A37',
+      '--tab-idle': '#8A867F', '--tab-active': '#F7F5F2', '--mark': '#F7F5F2',
+      duration: INV_D * .8
+    }, INV)
+    .to('.app-user', { backgroundColor: 'rgba(44,94,255,.22)', color: '#C9D6FF', duration: INV_D * .8 }, INV)
+    /* keep the machine readable once the page is as dark as its bezel */
+    .to('.ambient', { opacity: 1.6, duration: INV_D * .8 }, INV);
+
+  tl.to('.ctrl-head', { autoAlpha: 1, y: 0, duration: .12 }, 15.44)
+    .to('.ctrl-aggregate', { autoAlpha: 1, y: 0, duration: .22 }, 15.52)
+    .to('.ctrl-row', { autoAlpha: 1, y: 0, duration: .16, stagger: { each: .045 } }, 15.74);
+
+  tl.to({}, { duration: .34 });   /* a beat of rest on the finished frame */
   DUR = tl.duration();
   ScrollTrigger.getById('seq').refresh();
 
@@ -393,6 +526,7 @@ mm.add('(prefers-reduced-motion: reduce)', () => {
   document.getElementById('match-num').textContent = '3';
   /* the eliminated rows simply aren't shown in the still version */
   document.querySelectorAll('.lrow[data-wave]').forEach(r => r.style.display = 'none');
+  document.getElementById('slot-pick').classList.add('is-picked');
   const t = TABEL.inbox;
   gsap.set(underline, { x: t.offsetLeft, width: t.offsetWidth });
   return () => document.body.classList.remove('reduced');
