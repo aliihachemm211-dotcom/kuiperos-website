@@ -788,8 +788,12 @@ body {
    softens it rather than the other way round. Never interactive, never focal.
 --------------------------------------------------------------------------- */
 
+/* Above .pagelight, not below it: the paper light is a 70% white veil across
+   the top of the viewport, and underneath it the particles were washed out to
+   roughly a third of their drawn alpha exactly where the hero is. Still below
+   page content (z-index 3), so it can never compete with text. */
 .routing {
-  position:fixed; inset:0; pointer-events:none; z-index:0;
+  position:fixed; inset:0; pointer-events:none; z-index:2;
 }
 
 .pagelight {

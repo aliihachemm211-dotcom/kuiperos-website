@@ -1154,8 +1154,14 @@ if (document.fonts && document.fonts.ready) {
     }
   }
 
+  /* Visibility budget. These are the dials to turn if it ever reads as too
+     present — the ceiling is text legibility, nothing else. */
+  const TRAIL_A = .20;      /* the routed trace              */
+  const HEAD_A  = .34;      /* the particle itself           */
+  const DEMO_LV = .42;      /* multiplier behind the demo    */
+
   /* --- population ------------------------------------------------------- */
-  const MAX = () => (W < 768 ? 6 : 12);
+  const MAX = () => (W < 768 ? 8 : 15);
   const parts = [];
   const flashes = [];
 
@@ -1223,7 +1229,7 @@ if (document.fonts && document.fonts.ready) {
     if (!seq) return;
     const b = seq.getBoundingClientRect();
     /* the demo screens are already dense with real UI; nothing competes */
-    target = (b.top < H * .62 && b.bottom > H * .38) ? .30 : 1;
+    target = (b.top < H * .62 && b.bottom > H * .38) ? DEMO_LV : 1;
   }
 
   /* --- theme: the page inverts under the Control Room ------------------- */
@@ -1319,7 +1325,7 @@ if (document.fonts && document.fonts.ready) {
 
       const pts = p.trail.concat([{ x: p.x, y: p.y }]);
       for (let i = 1; i < pts.length; i++) {
-        const a = (i / pts.length) * .075 * k;
+        const a = (i / pts.length) * TRAIL_A * k;
         if (a < .004) continue;
         ctx.strokeStyle = 'rgba(' + line + ',' + a.toFixed(4) + ')';
         ctx.beginPath();
@@ -1328,22 +1334,25 @@ if (document.fonts && document.fonts.ready) {
         ctx.stroke();
       }
 
-      ctx.fillStyle = 'rgba(' + head + ',' + (.15 * k).toFixed(4) + ')';
+      ctx.fillStyle = 'rgba(' + head + ',' + (HEAD_A * k).toFixed(4) + ')';
       ctx.beginPath();
-      ctx.arc(p.x, p.y, 1.5, 0, 6.2832);
+      ctx.arc(p.x, p.y, 1.9, 0, 6.2832);
       ctx.fill();
     }
 
     /* arrival — accent blue, and only here */
     for (const f of flashes) {
       const k = (1 - f.t) * level;
-      ctx.strokeStyle = 'rgba(44,94,255,' + (.34 * k).toFixed(4) + ')';
+      ctx.lineWidth = 1.3;
+      ctx.strokeStyle = 'rgba(44,94,255,' + (.55 * k).toFixed(4) + ')';
       ctx.beginPath();
-      ctx.arc(f.x, f.y, 2 + 13 * f.t, 0, 6.2832);
+      /* a negative radius throws and takes the whole loop down with it */
+      ctx.arc(f.x, f.y, Math.max(.1, 2 + 15 * f.t), 0, 6.2832);
       ctx.stroke();
-      ctx.fillStyle = 'rgba(44,94,255,' + (.55 * k).toFixed(4) + ')';
+      ctx.lineWidth = 1;
+      ctx.fillStyle = 'rgba(44,94,255,' + (.85 * k).toFixed(4) + ')';
       ctx.beginPath();
-      ctx.arc(f.x, f.y, 1.7, 0, 6.2832);
+      ctx.arc(f.x, f.y, 2.1, 0, 6.2832);
       ctx.fill();
     }
   }
@@ -1368,9 +1377,15 @@ if (document.fonts && document.fonts.ready) {
     return;
   }
 
-  let last = performance.now(), raf = 0;
+  let last = 0, raf = 0;
   function frame(now) {
-    const dt = Math.min(.05, (now - last) / 1000);
+    /* rAF stamps the frame's START, which can precede the performance.now()
+       taken while this script was running inside that same frame — so the
+       first delta comes out negative. Unclamped it drove fade and t negative,
+       every particle failed the k <= .01 visibility test, and the arrival
+       radius eventually went negative and threw, killing the loop outright.
+       That is why the layer looked empty. Clamp at the source. */
+    const dt = last ? Math.min(.05, Math.max(0, (now - last) / 1000)) : 0;
     last = now;
     if (++themeTick % 18 === 0) { sampleTheme(); retarget(); }
     step(dt);
