@@ -781,6 +781,17 @@ body {
 .ctrl-stat { font-family:var(--f-mono); font-size:11.5px; letter-spacing:.05em; color:#8A867F; }
 
 /* page light, tweened out on inversion */
+/* ---------------------------------------------------------------------------
+   Routing engine — site-wide ambient texture.
+
+   Sits above the page background and below the warm paper light, so the light
+   softens it rather than the other way round. Never interactive, never focal.
+--------------------------------------------------------------------------- */
+
+.routing {
+  position:fixed; inset:0; pointer-events:none; z-index:0;
+}
+
 .pagelight {
   position:fixed; inset:0; pointer-events:none; z-index:1;
   background:
@@ -946,6 +957,9 @@ body {
      and a wrapped caption reads better as a rounded card than a stadium */
   .cap { font-size:13.5px; padding:9px 15px 9px 13px; max-width:74vw; border-radius:20px; }
   .caps { min-height:40px; }
+  /* the glow's horizontal bleed pushes past the padding box at this width;
+     it's a soft radial that fades out anyway, so dropping it costs nothing */
+  .decay-glow { inset:-22px 0 -26px; }
   .sf-row { grid-template-columns:1fr; }
   .resolve { width:min(88vw,470px); }
   .resolve-msg { font-size:14px; white-space:normal; padding:0 10px; }

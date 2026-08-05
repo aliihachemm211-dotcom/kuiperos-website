@@ -1102,3 +1102,291 @@ if (signupForm) {
 if (document.fonts && document.fonts.ready) {
   document.fonts.ready.then(() => ScrollTrigger.refresh());
 }
+
+/* ===========================================================================
+   AMBIENT — the routing engine.
+
+   Sparse particles enter from the edges and travel to a destination through
+   an invisible lattice, choosing their turns as they go. Paths split, merge
+   and reroute; nothing drifts and nothing arrives nowhere. It visualises what
+   kuiper actually does — matching, assignment, routing — rather than "a
+   system is thinking".
+
+   The lattice itself is never drawn. Only the moving particle, the trace it
+   has just cut, and a blue flash at the moment a route completes. Drawing the
+   graph would land on the neural-mesh cliché this deliberately isn't.
+
+   Legibility is the hard constraint: alphas here are deliberately near the
+   threshold of visibility, and the whole layer steps back behind the demo.
+=========================================================================== */
+(function routing() {
+  const cv = document.createElement('canvas');
+  cv.className = 'routing';
+  cv.setAttribute('aria-hidden', 'true');
+  document.body.prepend(cv);
+  const ctx = cv.getContext('2d');
+
+  let W = 0, H = 0, GAP = 170, cols = 0, rows = 0;
+  let nodes = [];
+  const at = (c, r) => nodes[r * cols + c];
+
+  function build() {
+    const DPR = Math.min(2, window.devicePixelRatio || 1);
+    W = window.innerWidth; H = window.innerHeight;
+    cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+    cv.style.width = W + 'px'; cv.style.height = H + 'px';
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+    GAP = W < 768 ? 132 : 172;
+    cols = Math.ceil(W / GAP) + 3;
+    rows = Math.ceil(H / GAP) + 3;
+
+    /* jitter is hashed off the cell, not random, so the lattice is stable
+       across resizes — routes don't jump when the viewport changes */
+    nodes = [];
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const h = ((c * 73856093) ^ (r * 19349663)) >>> 0;
+        const jx = (((h % 997) / 997) - .5) * GAP * .40;
+        const jy = ((((h >> 11) % 997) / 997) - .5) * GAP * .40;
+        nodes.push({ x: (c - 1) * GAP + jx, y: (r - 1) * GAP + jy });
+      }
+    }
+  }
+
+  /* --- population ------------------------------------------------------- */
+  const MAX = () => (W < 768 ? 6 : 12);
+  const parts = [];
+  const flashes = [];
+
+  const randEdge = () => {
+    const s = (Math.random() * 4) | 0;
+    if (s === 0) return { c: (Math.random() * cols) | 0, r: 0 };
+    if (s === 1) return { c: cols - 1, r: (Math.random() * rows) | 0 };
+    if (s === 2) return { c: (Math.random() * cols) | 0, r: rows - 1 };
+    return { c: 0, r: (Math.random() * rows) | 0 };
+  };
+
+  function destFrom(s) {
+    const far = Math.max(3, ((cols + rows) / 5) | 0);
+    let d, n = 0;
+    do {
+      d = { c: (Math.random() * cols) | 0, r: (Math.random() * rows) | 0 };
+      n++;
+    } while (n < 14 && Math.abs(d.c - s.c) + Math.abs(d.r - s.r) < far);
+    return d;
+  }
+
+  function spawn(from, dest) {
+    if (parts.length >= MAX() + 4) return;
+    const s = from || randEdge();
+    const d = dest || destFrom(s);
+    const p = {
+      c: s.c, r: s.r, dc: d.c, dr: d.r,
+      t: 0, speed: .010 + Math.random() * .008,
+      dir: null, trail: [], fade: 0, dying: 0, split: Math.random() < .22
+    };
+    p.x = at(p.c, p.r).x; p.y = at(p.c, p.r).y;
+    p.trail.push({ x: p.x, y: p.y });
+    hop(p);
+    parts.push(p);
+  }
+
+  /* Pick the next leg. Only moves that close the gap are considered, so every
+     particle is always heading somewhere; straight is preferred so the traces
+     read as routed runs rather than a wander. */
+  function hop(p) {
+    const opts = [];
+    if (p.dc > p.c) opts.push([1, 0]);
+    if (p.dc < p.c) opts.push([-1, 0]);
+    if (p.dr > p.r) opts.push([0, 1]);
+    if (p.dr < p.r) opts.push([0, -1]);
+    if (!opts.length) { p.arrived = true; return; }
+
+    let pick = opts[(Math.random() * opts.length) | 0];
+    if (p.dir && opts.length > 1 && Math.random() < .64) {
+      const straight = opts.find(o => o[0] === p.dir[0] && o[1] === p.dir[1]);
+      if (straight) pick = straight;
+    }
+    p.dir = pick;
+    p.fc = p.c; p.fr = p.r;
+    p.c += pick[0]; p.r += pick[1];
+    p.t = 0;
+  }
+
+  const flash = (x, y) => flashes.push({ x, y, t: 0 });
+
+  /* --- intensity: recedes behind the laptop-frame demo ------------------- */
+  let level = 1, target = 1;
+  function retarget() {
+    const seq = document.getElementById('sequence');
+    if (!seq) return;
+    const b = seq.getBoundingClientRect();
+    /* the demo screens are already dense with real UI; nothing competes */
+    target = (b.top < H * .62 && b.bottom > H * .38) ? .30 : 1;
+  }
+
+  /* --- theme: the page inverts under the Control Room ------------------- */
+  let dark = false, themeTick = 0;
+  function sampleTheme() {
+    const m = getComputedStyle(document.body).backgroundColor.match(/\d+(\.\d+)?/g);
+    if (!m) return;
+    dark = (+m[0] * .299 + +m[1] * .587 + +m[2] * .114) < 110;
+  }
+
+  /* --- frame ------------------------------------------------------------ */
+  function step(dt) {
+    while (parts.length < MAX()) spawn();
+
+    for (let i = parts.length - 1; i >= 0; i--) {
+      const p = parts[i];
+
+      if (p.dying) {
+        p.dying -= dt * 2.4;
+        if (p.dying <= 0) parts.splice(i, 1);
+        continue;
+      }
+
+      p.fade = Math.min(1, p.fade + dt * 1.6);
+      p.t += p.speed * dt * 60;
+
+      if (p.t >= 1) {
+        const n = at(p.c, p.r);
+        p.trail.push({ x: n.x, y: n.y });
+        if (p.trail.length > 7) p.trail.shift();
+
+        /* a route completes: the one moment blue is allowed */
+        if (p.c === p.dc && p.r === p.dr) {
+          flash(n.x, n.y);
+          p.dying = 1;
+          continue;
+        }
+        /* split: the same inquiry fanning out to a second destination */
+        if (p.split && Math.random() < .06) {
+          p.split = false;
+          spawn({ c: p.c, r: p.r }, destFrom({ c: p.c, r: p.r }));
+        }
+        /* reroute: destinations change while work is in flight */
+        if (Math.random() < .04) {
+          const d = destFrom({ c: p.c, r: p.r });
+          p.dc = d.c; p.dr = d.r;
+        }
+        hop(p);
+        if (p.arrived) { flash(n.x, n.y); p.dying = 1; continue; }
+      }
+
+      const a = at(p.fc, p.fr), b = at(p.c, p.r);
+      if (!a || !b) { parts.splice(i, 1); continue; }
+      const e = p.t * p.t * (3 - 2 * p.t);        /* ease into each node */
+      p.x = a.x + (b.x - a.x) * e;
+      p.y = a.y + (b.y - a.y) * e;
+    }
+
+    /* merge: two particles meeting at the same point resolve into one */
+    for (let i = parts.length - 1; i >= 0; i--) {
+      const p = parts[i];
+      if (p.dying) continue;
+      for (let j = i - 1; j >= 0; j--) {
+        const q = parts[j];
+        if (q.dying) continue;
+        if (Math.abs(p.x - q.x) < 5 && Math.abs(p.y - q.y) < 5) {
+          flash(p.x, p.y);
+          p.dying = 1;
+          break;
+        }
+      }
+    }
+
+    for (let i = flashes.length - 1; i >= 0; i--) {
+      flashes[i].t += dt * 2.1;
+      if (flashes[i].t >= 1) flashes.splice(i, 1);
+    }
+
+    level += (target - level) * Math.min(1, dt * 3);
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    const line = dark ? '236,234,231' : '110,107,102';
+    const head = dark ? '250,249,247' : '26,25,23';
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 1;
+
+    for (const p of parts) {
+      const k = level * p.fade * (p.dying ? p.dying : 1);
+      if (k <= .01) continue;
+
+      const pts = p.trail.concat([{ x: p.x, y: p.y }]);
+      for (let i = 1; i < pts.length; i++) {
+        const a = (i / pts.length) * .075 * k;
+        if (a < .004) continue;
+        ctx.strokeStyle = 'rgba(' + line + ',' + a.toFixed(4) + ')';
+        ctx.beginPath();
+        ctx.moveTo(pts[i - 1].x, pts[i - 1].y);
+        ctx.lineTo(pts[i].x, pts[i].y);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = 'rgba(' + head + ',' + (.15 * k).toFixed(4) + ')';
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 1.5, 0, 6.2832);
+      ctx.fill();
+    }
+
+    /* arrival — accent blue, and only here */
+    for (const f of flashes) {
+      const k = (1 - f.t) * level;
+      ctx.strokeStyle = 'rgba(44,94,255,' + (.34 * k).toFixed(4) + ')';
+      ctx.beginPath();
+      ctx.arc(f.x, f.y, 2 + 13 * f.t, 0, 6.2832);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(44,94,255,' + (.55 * k).toFixed(4) + ')';
+      ctx.beginPath();
+      ctx.arc(f.x, f.y, 1.7, 0, 6.2832);
+      ctx.fill();
+    }
+  }
+
+  /* --- run -------------------------------------------------------------- */
+  build();
+  sampleTheme();
+
+  if (REDUCED) {
+    /* one still frame: the texture is present, nothing moves */
+    for (let i = 0; i < 9; i++) {
+      spawn();
+      const p = parts[parts.length - 1];
+      for (let n = 0; n < 3 + ((Math.random() * 4) | 0); n++) {
+        p.t = 1; p.fade = 1; step(0);
+      }
+    }
+    parts.forEach(p => p.fade = 1);
+    level = 1;
+    draw();
+    window.addEventListener('resize', () => { build(); draw(); });
+    return;
+  }
+
+  let last = performance.now(), raf = 0;
+  function frame(now) {
+    const dt = Math.min(.05, (now - last) / 1000);
+    last = now;
+    if (++themeTick % 18 === 0) { sampleTheme(); retarget(); }
+    step(dt);
+    draw();
+    raf = requestAnimationFrame(frame);
+  }
+  raf = requestAnimationFrame(frame);
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { cancelAnimationFrame(raf); raf = 0; }
+    else if (!raf) { last = performance.now(); raf = requestAnimationFrame(frame); }
+  });
+
+  let rt = 0;
+  window.addEventListener('resize', () => {
+    clearTimeout(rt);
+    rt = setTimeout(() => { build(); parts.length = 0; flashes.length = 0; }, 160);
+  });
+})();
