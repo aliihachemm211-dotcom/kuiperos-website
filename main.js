@@ -621,8 +621,11 @@ mm.add('(prefers-reduced-motion: no-preference)', () => {
   tl.fromTo('#resolve-wrap', { autoAlpha: 0 }, { autoAlpha: 1, duration: .14, immediateRender: false }, OUT + .22)
     .fromTo('#resolve', { scale: .42, y: 26 }, { scale: 1, y: 0, duration: .5, immediateRender: false }, OUT + .22);
 
-  /* and becomes the button: one element, morphed */
-  const MORPH = OUT + .78;
+  /* and becomes the button: one element, morphed. Held until after the line
+     has landed, so the ending reads in order rather than all at once:
+     machine recedes -> message comes forward -> line lands -> message
+     becomes the button. */
+  const MORPH = OUT + 1.0;
   tl.to('#resolve', {
     width: 268, height: 60, borderRadius: 8,
     backgroundColor: '#2C5EFF', borderColor: '#2C5EFF',
@@ -632,14 +635,24 @@ mm.add('(prefers-reduced-motion: no-preference)', () => {
     .to('#resolve-msg', { autoAlpha: 0, duration: .16 }, MORPH)
     .to('#resolve-cta', { autoAlpha: 1, duration: .18 }, MORPH + .2);
 
-  /* the line that bookends the opener */
-  tl.fromTo('#cta-line', { autoAlpha: 0, y: 26, filter: 'blur(6px)' },
-    { autoAlpha: 1, y: 0, filter: 'blur(0px)', duration: .32, immediateRender: false }, MORPH + .16);
+  /* The line that bookends the opener.
 
-  /* Dead scroll after the CTA resolves. At .34 the line finished barely
-     before the pin released, so every small scroll at the bottom scrubbed it
-     back and forth and it read as a glitch. It now completes well clear of
-     the end and idle movement can't reach it. */
+     Deliberately NOT scrub-linked. As a scrubbed fromTo it reversed on every
+     small scroll around its position — the sentence blurred out and came back
+     — which is exactly the glitch that was reported. It now plays once, on a
+     latch, and never animates again. It still hides when the visitor scrolls
+     back into the demo, because it lives inside #resolve-wrap whose own
+     visibility stays scrub-controlled. */
+  const ctaLine = document.getElementById('cta-line');
+  gsap.set(ctaLine, { autoAlpha: 0, y: 22 });
+  let ctaShown = false;
+  tl.call(() => {
+    if (ctaShown) return;
+    ctaShown = true;
+    gsap.to(ctaLine, { autoAlpha: 1, y: 0, duration: .6, ease: 'power3.out' });
+  }, null, OUT + .72);   /* the machine has fully receded by OUT + .66 */
+
+  /* dead scroll after the resolution, so the finished frame can be held */
   tl.to({}, { duration: 1.3 });
   DUR = tl.duration();
   ScrollTrigger.getById('seq').refresh();
@@ -739,6 +752,9 @@ function splitWords(el) {
   const col    = document.getElementById('decay-col');
   const stage  = document.getElementById('hero-stage');
   const kicker = document.getElementById('decay-kicker');
+  const dkText = document.getElementById('dk-text');
+  const dkCaret= document.getElementById('dk-caret');
+  const KICKER = dkText ? dkText.textContent : '';
   const lift   = document.getElementById('dc-lift');
   const reply  = document.getElementById('dc-reply');
   const replyLabel = document.getElementById('dc-reply-label');
@@ -780,6 +796,8 @@ function splitWords(el) {
     gsap.set([PW, QW], { y: '0%' });
     gsap.set([punch, quiet], { autoAlpha: 1 });
     gsap.set(kicker, { autoAlpha: 1, y: 0 });
+    dkText.textContent = KICKER;
+    gsap.set(dkCaret, { autoAlpha: 0 });
     ago.textContent = '36 minutes ago';
     status.textContent = 'Likely gone.';
     dot.style.backgroundColor = LOST;
@@ -804,6 +822,8 @@ function splitWords(el) {
   gsap.set([PW, QW], { y: '105%' });
   gsap.set(card, { autoAlpha: 0, y: 22, scale: .96, filter: 'blur(7px) saturate(1)' });
   gsap.set(kicker, { autoAlpha: 0, y: 10 });
+  gsap.set(dkCaret, { autoAlpha: 1 });
+  dkText.textContent = '';
 
   /* The breath is an opacity fade on a promoted shadow layer. The previous
      version tweened box-shadow on the card itself, which repainted a large
@@ -833,10 +853,21 @@ function splitWords(el) {
   };
 
   /* card arrives */
-  decay.to(kicker, { autoAlpha: 1, y: 0, duration: .5, ease: 'power3.out' }, 0)
-    .to(card, { autoAlpha: 1, duration: .28 }, .18)
-    .to(card, { y: 0, scale: 1, filter: 'blur(0px) saturate(1)', duration: .8, ease: 'power3.out' }, .18)
-    .call(() => breath.play(), null, .8);
+  decay.to(kicker, { autoAlpha: 1, y: 0, duration: .35, ease: 'power3.out' }, 0);
+
+  /* typed character by character, the way the qualifying form fills later */
+  const kt = { n: 0 };
+  decay.to(kt, {
+    n: KICKER.length, duration: .95, ease: 'none', snap: { n: 1 },
+    onUpdate: () => { dkText.textContent = KICKER.slice(0, Math.round(kt.n)); }
+  }, .12);
+  /* the caret blinks while typing, then leaves — it isn't an ornament */
+  decay.to(dkCaret, { autoAlpha: 0, duration: .12, repeat: 5, yoyo: true }, .18)
+    .to(dkCaret, { autoAlpha: 0, duration: .2 }, 1.12);
+
+  decay.to(card, { autoAlpha: 1, duration: .28 }, .62)
+    .to(card, { y: 0, scale: 1, filter: 'blur(0px) saturate(1)', duration: .8, ease: 'power3.out' }, .62)
+    .call(() => breath.play(), null, 1.2);
 
   beat(0.28, '2 seconds ago',  'Interested', WON);
   beat(1.05, '47 seconds ago', null, null);
@@ -937,7 +968,7 @@ function splitWords(el) {
     done = true;
     retired = true;
     breath.kill();
-    gsap.killTweensOf([excuse, typing, card, wrap, reply, kicker, lift]);
+    gsap.killTweensOf([excuse, typing, card, wrap, reply, kicker, lift, dkCaret, kt]);
     decay.pause().kill();
     copy.pause().kill();
     setResolved();

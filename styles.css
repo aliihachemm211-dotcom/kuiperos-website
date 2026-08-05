@@ -173,9 +173,17 @@ body {
 /* Tells a cold visitor what they're looking at from frame zero. A label, not
    a headline — the hero still shows no headline until the decay resolves. */
 .decay-kicker {
-  margin-bottom:16px;
-  font-family:var(--f-mono); font-size:11px; letter-spacing:.19em;
-  text-transform:uppercase; color:var(--mute);
+  margin-bottom:20px; min-height:1.3em;
+  display:flex; align-items:center; gap:3px;
+  font-family:var(--f-mono); font-size:clamp(13px,1.15vw,16px);
+  letter-spacing:.13em; text-transform:uppercase; color:var(--ink-2);
+  white-space:nowrap;
+}
+/* typed, not placed — the same behaviour the qualifying form uses later, so
+   the site's own language introduces itself before the product does */
+.dk-caret {
+  width:2px; height:1.05em; background:var(--accent);
+  display:inline-block; flex:0 0 2px;
 }
 
 /* --- the reply affordance ------------------------------------------------
@@ -335,7 +343,14 @@ body {
 .bl-clause { display:block; text-wrap:balance; }
 .bl-clause + .bl-clause { margin-top:.22em; }
 .bl-soft { color:var(--mute); }
-.bl-hard { color:var(--ink); }
+/* the correction is the point of the line, so it carries the accent */
+.bl-hard { color:var(--accent); }
+
+/* Emphasis. These are the only places colour is used as typographic weight
+   rather than as state — a deliberate exception, kept to four words so it
+   still reads as emphasis and not as a palette. */
+.em-amber { color:var(--pending); }
+.em-blue  { color:var(--accent); }
 
 /* the "it's handled" beat — the largest thing in the section */
 .bl-resolve {
