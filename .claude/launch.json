@@ -4,8 +4,9 @@
     {
       "name": "kuiper-static",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["-y", "serve", "-l", "5500", "."],
-      "port": 5500
+      "runtimeArgs": ["-y", "serve", "."],
+      "port": 5500,
+      "autoPort": true
     }
   ]
 }

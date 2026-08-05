@@ -564,74 +564,236 @@ mm.add('(prefers-reduced-motion: reduce)', () => {
 });
 
 /* ===========================================================================
-   HERO — two panels sharing one position, cross-fading on a ~9s loop.
+   HERO — Act 0. Rania's inquiry, cooling off in real time.
 
-   Two independent signals ride the same count: the readout carries cost
-   (ink → pending amber at the hour mark → lost red), while the dot and
-   label carry neglect (accent → mute). They are deliberately separate.
+   Three timelines, deliberately separate:
+     decay   — the unstoppable clock (timestamp, status, colour, recession)
+     copy    — the resolution lines, which only run once decay finishes
+     excuse  — click flavour, layered on top, never touching either of the above
+
+   The decay arc reuses the CRM's own status language (won → pending → lost)
+   rather than WhatsApp green: the hero foreshadows the state vocabulary the
+   Pipeline and Control Room use later, instead of borrowing another product's.
+
+   Safety rule: any scroll at any point hard-snaps everything to the resolved
+   end state. Never left mid-transition — that was v2's failure mode.
 =========================================================================== */
 (function hero() {
-  const A = document.getElementById('hero-a');
-  const B = document.getElementById('hero-b');
-  const timeEl = document.getElementById('ll-time');
-  const dotEl = document.getElementById('ll-dot');
-  const labelEl = document.getElementById('ll-label');
-  if (!A || !B) return;
+  const card   = document.getElementById('decay-card');
+  const wrap   = document.getElementById('decay-wrap');
+  const col    = document.getElementById('decay-col');
+  const stage  = document.getElementById('hero-stage');
+  const glow   = document.getElementById('decay-glow');
+  const nudge  = document.getElementById('decay-nudge');
+  const dot    = document.getElementById('dc-dot');
+  const chan   = document.querySelector('.dc-chan');
+  const ago    = document.getElementById('dc-ago');
+  const status = document.getElementById('dc-status');
+  const typing = document.getElementById('dc-typing');
+  const excuse = document.getElementById('dc-excuse');
+  const punch  = document.getElementById('hr-punch');
+  const quiet  = document.getElementById('hr-quiet');
+  if (!card || !stage) return;
 
-  const COST_EARLY = gsap.utils.interpolate('#1A1917', '#B45309'); /* ink → pending */
-  const COST_LATE  = gsap.utils.interpolate('#B45309', '#B91C1C'); /* pending → lost */
-  const NEGLECT    = gsap.utils.interpolate('#2C5EFF', '#6E6B66'); /* fresh → abandoned */
-  const TOTAL = 156, HOUR = 60;
+  const WON = '#15803D', PENDING = '#B45309', LOST = '#9A3B32';
+  const tint = (hex, a) => {
+    const n = parseInt(hex.slice(1), 16);
+    return 'rgba(' + (n >> 16) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
+  };
 
-  function render(n) {
-    timeEl.textContent = Math.round(n);
-    timeEl.style.color = n <= HOUR
-      ? COST_EARLY(n / HOUR)
-      : COST_LATE((n - HOUR) / (TOTAL - HOUR));
-    const g = NEGLECT(Math.min(1, n / TOTAL));
-    dotEl.style.backgroundColor = g;
-    labelEl.style.color = g;
+  /* --- word masks: the copy travels in, it never fades in ----------------- */
+  function splitWords(el) {
+    const words = el.textContent.split(' ');
+    el.textContent = '';
+    return words.map((w, i) => {
+      const mask = document.createElement('span');
+      mask.className = 'wm';
+      const inner = document.createElement('span');
+      inner.textContent = w;
+      mask.appendChild(inner);
+      el.appendChild(mask);
+      if (i < words.length - 1) el.appendChild(document.createTextNode(' '));
+      return inner;
+    });
   }
+  const PW = splitWords(punch);
+  const QW = splitWords(quiet);
 
-  gsap.set(A, { autoAlpha: 1 });
-  gsap.set(B, { autoAlpha: 0 });
+  /* The card is alone and centred while it decays, then travels into the
+     left column as the copy arrives. Measured, not hard-coded, so it stays
+     centred at any width — and recomputed on resize. */
+  const centreX = () => {
+    if (window.matchMedia('(max-width:1024px)').matches) return 0;
+    return (stage.offsetWidth / 2) - (col.offsetLeft - stage.offsetLeft + col.offsetWidth / 2);
+  };
 
-  /* A→B is a true cross-fade (both move together); B→A is fade out, pause,
-     then back to A — which is what the timing table adds up to: 2.6 + 0.7
-     + 0.6 + 4.5 + 0.6 + 0.7 = 9.7s. */
-  const COUNT = 2.6, HOLD = 0.7, XF = 0.6, RESOLVE = 4.5, PAUSE = 0.7;
-  const T_XF = COUNT + HOLD;              /* 3.3 */
-  const T_OUT = T_XF + XF + RESOLVE;      /* 8.4 */
+  /* --- resting state (also the reduced-motion state) ---------------------- */
+  const setResolved = () => {
+    gsap.set(wrap, { x: 0, scale: 1, clearProps: 'filter' });
+    gsap.set(card, { boxShadow: 'var(--lift-1)', filter: 'saturate(.72)', scale: 1, y: 0 });
+    gsap.set(glow, { autoAlpha: 0 });
+    gsap.set(nudge, { autoAlpha: 0 });
+    gsap.set(typing, { autoAlpha: 0 });
+    gsap.set(excuse, { autoAlpha: 0 });
+    gsap.set([PW, QW], { y: '0%' });
+    gsap.set([punch, quiet], { autoAlpha: 1 });
+    ago.textContent = '36 minutes ago';
+    status.textContent = 'Likely gone.';
+    dot.style.backgroundColor = LOST;
+    chan.style.color = LOST;
+    status.style.color = LOST;
+    status.style.backgroundColor = tint(LOST, .09);
+  };
 
-  const loop = gsap.timeline({ repeat: -1, paused: true });
-  loop.set(A, { autoAlpha: 0 }, 0)
-    .set(B, { autoAlpha: 0 }, 0)
-    .to(A, { autoAlpha: 1, duration: 0.4 }, 0);
+  if (REDUCED) { setResolved(); return; }
 
-  if (REDUCED) {
-    /* no odometer: the resolved state is shown directly, but the panels
-       still cross-fade rather than going fully static */
-    render(TOTAL);
-  } else {
-    const c = { n: 0 };
-    render(0);
-    loop.fromTo(c, { n: 0 }, {
-      n: TOTAL, duration: COUNT, ease: 'power2.out',   /* ease-out-cubic */
-      onUpdate: () => render(c.n)
-    }, 0);
-  }
+  /* Measured after layout, not at parse time — at parse time the custom faces
+     haven't loaded and every offset reads 0, which silently left the card
+     pinned to the left column instead of centred. */
+  const recentre = () => {
+    if (done || copy.progress() > 0) return;
+    gsap.set(wrap, { x: centreX() });
+  };
 
-  loop.to(A, { autoAlpha: 0, duration: XF }, T_XF)
-    .to(B, { autoAlpha: 1, duration: XF }, T_XF)
-    .to(B, { autoAlpha: 0, duration: XF }, T_OUT)
-    .to({}, { duration: PAUSE }, T_OUT + XF);
+  gsap.set(wrap, { x: centreX() });
+  gsap.set([punch, quiet], { autoAlpha: 1 });
+  gsap.set([PW, QW], { y: '105%' });
+  gsap.set(card, { autoAlpha: 0, y: 22, scale: .96, filter: 'blur(7px) saturate(1)' });
+  gsap.set(glow, { autoAlpha: 0, scale: .96 });
 
-  /* only run while the hero is actually on screen */
-  ScrollTrigger.create({
-    trigger: '#hero', start: 'top bottom', end: 'bottom top',
-    onToggle: (self) => self.isActive ? loop.play() : loop.pause()
+  /* --- the breath: a slow ambient pulse that decelerates to still --------- */
+  const breath = gsap.to(glow, {
+    scale: 1.055, opacity: .74, duration: 1.5,
+    ease: 'sine.inOut', repeat: -1, yoyo: true, paused: true
   });
-  loop.play();
+
+  /* =========================== the clock ================================= */
+  /* Front-loaded then decelerating — the slowdown is the point. */
+  const decay = gsap.timeline({ paused: true, onComplete: () => copy.play() });
+
+  const beat = (at, label, statusText, colour) => {
+    decay.call(() => {
+      ago.textContent = label;
+      if (!statusText) return;
+      status.textContent = statusText;
+      dot.style.backgroundColor = colour;
+      chan.style.color = colour;
+      status.style.color = colour;
+      status.style.backgroundColor = tint(colour, .09);
+      gsap.fromTo(glow,
+        { background: glow.style.background || '' },
+        { duration: 0 });
+      glow.style.background =
+        'radial-gradient(58% 54% at 50% 52%, ' + tint(colour, .20) + ', ' + tint(colour, 0) + ' 72%)';
+    }, null, at);
+    /* the readout itself ticks over physically, not as a text swap */
+    decay.fromTo(ago, { y: 5 }, { y: 0, duration: .22, ease: 'power2.out' }, at);
+  };
+
+  /* card arrives */
+  decay.to(card, { autoAlpha: 1, duration: .28 }, 0)
+    .to(card, { y: 0, scale: 1, filter: 'blur(0px) saturate(1)', duration: .72, ease: 'power3.out' }, 0)
+    .to(glow, { autoAlpha: 1, scale: 1, duration: .6, ease: 'power2.out' }, .1)
+    .call(() => breath.play(), null, .5);
+
+  beat(0.00, '2 seconds ago',  'Interested', WON);
+  beat(0.75, '47 seconds ago', null, null);
+
+  /* the near-miss: a reply gets drafted, then abandoned unsent */
+  decay.fromTo(typing, { autoAlpha: 0, scale: .8, y: -6 },
+    { autoAlpha: 1, scale: 1, y: 0, duration: .3, ease: 'back.out(2)' }, 1.0);
+  decay.to(typing.querySelectorAll('i'), {
+    y: -3, duration: .3, ease: 'sine.inOut', repeat: 2, yoyo: true, stagger: .09
+  }, 1.15);
+  /* it collapses back rather than fading — an aborted attempt, not a sent one */
+  decay.to(typing, { scale: .72, y: 8, autoAlpha: 0, duration: .26, ease: 'power2.in' }, 2.0);
+
+  beat(2.20, '3 minutes ago',  'Waiting…', PENDING);
+  beat(3.30, '11 minutes ago', null, null);
+  beat(4.75, '36 minutes ago', 'Likely gone.', LOST);
+
+  /* the card physically recedes as it cools: elevation drops, colour drains,
+     proportions tighten. The breath slows in step and settles to still. */
+  decay.to(card, { boxShadow: 'var(--lift-2)', duration: 1.6 }, 1.0)
+    .to(card, { boxShadow: 'var(--lift-1)', filter: 'saturate(.72)', scale: .984, duration: 2.4 }, 2.6)
+    .to(breath, { timeScale: .34, duration: 3.4, ease: 'power1.in' }, 1.4)
+    .to(glow, { autoAlpha: 0, duration: 1.4 }, 3.9)
+    .call(() => breath.pause(), null, 5.3)
+    .to({}, { duration: .25 });   /* a beat of stillness before the copy */
+
+  /* ======================== the resolution copy ========================== */
+  const copy = gsap.timeline({ paused: true });
+  copy.to(wrap, { x: 0, duration: 1.05, ease: 'power3.inOut' }, 0)
+    .to(PW, { y: '0%', duration: .8, ease: 'power3.out', stagger: .035 }, .25)
+    .to(QW, { y: '0%', duration: .62, ease: 'power3.out', stagger: .014 }, 1.35);
+
+  /* ====================== the nudge and the excuses ====================== */
+  /* Clicking never pauses the clock. Both paths land on the same end state. */
+  const EXCUSES = [
+    'Oops — you’re on a call. Try again in a sec.',
+    'Oops — you’re scheduling a viewing.'
+  ];
+  const CLICK_CAP = EXCUSES.length;   /* 2 — one reads as a glitch, three as a bit */
+  let clicks = 0, done = false;
+
+  const nudgeTl = gsap.timeline({ paused: true, repeat: -1, repeatDelay: .9 });
+  nudgeTl.fromTo(nudge, { autoAlpha: .85, scale: .985 },
+    { autoAlpha: 0, scale: 1.045, duration: 1.15, ease: 'power2.out' });
+
+  const killNudge = () => { nudgeTl.pause(); gsap.set(nudge, { autoAlpha: 0 }); };
+  /* the affordance goes the moment the sequence reaches "Waiting…" */
+  gsap.delayedCall(1.5, () => { if (!done && !clicks) nudgeTl.play(); });
+  decay.call(killNudge, null, 2.2);
+
+  card.addEventListener('click', () => {
+    if (done || clicks >= CLICK_CAP) return;      /* a third click does nothing */
+    killNudge();
+    const text = EXCUSES[clicks];
+    clicks += 1;
+    excuse.textContent = text;
+    gsap.killTweensOf(excuse);
+    gsap.timeline()
+      .set(excuse, { xPercent: -50 })
+      .fromTo(excuse, { autoAlpha: 0, y: 14, scale: .88 },
+        { autoAlpha: 1, y: 0, scale: 1, duration: .34, ease: 'back.out(2.2)' })
+      .to(excuse, { autoAlpha: 0, y: -10, scale: .94, duration: .3, ease: 'power2.in' }, '+=2.0');
+  });
+
+  /* ============================ safety rule ============================== */
+  /* Scroll at any point — mid-fade, mid-click, mid-anything — snaps straight
+     to the resolved end state. Idempotent, and it can't be re-armed. */
+  function resolveNow() {
+    if (done) return;
+    done = true;
+    killNudge();
+    nudgeTl.kill();
+    breath.kill();
+    gsap.killTweensOf([excuse, typing, card, glow, wrap]);
+    decay.pause().kill();
+    copy.pause().kill();
+    setResolved();
+  }
+
+  ['wheel', 'touchmove', 'keydown'].forEach(ev =>
+    window.addEventListener(ev, (e) => {
+      if (ev === 'keydown' && !['ArrowDown', 'PageDown', 'Space', ' ', 'End'].includes(e.key)) return;
+      resolveNow();
+    }, { once: false, passive: true }));
+
+  /* A plain scroll-position check, deliberately NOT a ScrollTrigger: the hero
+     sits at the very top of the document, so any trigger anchored to it reads
+     as already-passed at scrollY 0 and resolves the sequence before it plays.
+     The threshold keeps browser scroll restoration from doing the same. */
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 4) resolveNow();
+  }, { passive: true });
+
+  /* keep the centring honest across resize and late font loads */
+  window.addEventListener('resize', recentre);
+  window.addEventListener('load', recentre);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(recentre);
+
+  decay.play();
 })();
 
 /* ---------------------------------------------------------------------------

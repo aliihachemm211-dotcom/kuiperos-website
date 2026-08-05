@@ -28,36 +28,46 @@
 
   <main>
 
-    <!-- ===================== HERO — two panels, one loop ===================== -->
+    <!-- ===================== HERO — Act 0: one inquiry, cooling ===================
+         No headline until the decay resolves. The card is the same lead the whole
+         site follows (Rania K., 10:41), shown once, going cold in real time.
+    ========================================================================== -->
     <section class="hero" id="hero">
-      <div class="hero-inner">
+      <div class="hero-stage" id="hero-stage">
 
-        <!-- Panel A — the problem -->
-        <div class="hero-panel" id="hero-a">
-          <div class="hero-copy">
-            <h1 class="hero-h">Hours have passed. Your lead is still&nbsp;waiting.</h1>
-            <p class="hero-sub">That’s a lead gone cold, and a deal unclosed.</p>
-          </div>
+        <div class="decay-col" id="decay-col">
+          <div class="decay-wrap" id="decay-wrap">
 
-          <div class="lead-live">
-            <div class="ll-top">
-              <span class="ll-dot" id="ll-dot"></span>
-              <span class="ll-label" id="ll-label">New lead — Jad R.</span>
-            </div>
-            <div class="ll-read">
-              <span class="ll-time" id="ll-time">0</span>
-              <span class="ll-unit">minutes</span>
-            </div>
+            <!-- ambient breath: a slow glow behind the card, not a UI element -->
+            <div class="decay-glow" id="decay-glow" aria-hidden="true"></div>
+            <div class="decay-nudge" id="decay-nudge" aria-hidden="true"></div>
+
+            <article class="decay-card" id="decay-card">
+              <div class="dc-top">
+                <span class="dc-dot" id="dc-dot" aria-hidden="true"></span>
+                <span class="dc-chan">WhatsApp</span>
+                <span class="dc-name">Rania K.</span>
+              </div>
+              <p class="dc-body">I am looking for a 2 bedroom in Achrafieh, anything available?</p>
+              <div class="dc-meta">
+                <span class="dc-clock">10:41</span>
+                <span class="dc-ago" id="dc-ago">2 seconds ago</span>
+                <span class="dc-status" id="dc-status">Interested</span>
+              </div>
+            </article>
+
+            <!-- a reply being drafted, then abandoned unsent -->
+            <div class="dc-typing" id="dc-typing" aria-hidden="true"><i></i><i></i><i></i></div>
+
+            <div class="dc-excuse" id="dc-excuse" aria-hidden="true"></div>
           </div>
         </div>
 
-        <!-- Panel B — the resolution -->
-        <div class="hero-panel" id="hero-b">
-          <div class="hero-copy is-wide">
-            <h1 class="hero-h">With kuiper, every new lead is qualified, matched, and handed to the right agent while it’s still&nbsp;warm.</h1>
-            <p class="hero-sub">Scroll to see how the same lead was handled differently.</p>
-            <button class="btn-outline-cta" type="button">Request early access</button>
-          </div>
+        <div class="hero-resolve" id="hero-resolve">
+          <!-- the page's h1: no headline is shown until the decay resolves,
+               but once it does, this line is the page's primary statement -->
+          <h1 class="hr-punch" id="hr-punch">Every minute of silence is a lead deciding on someone else.</h1>
+          <p class="hr-quiet" id="hr-quiet">Hours pass. Leads go cold. Somewhere in the chaos, you’re losing deals you never even saw.</p>
         </div>
 
       </div>
