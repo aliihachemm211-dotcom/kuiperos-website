@@ -216,6 +216,9 @@
                         <span class="msg-meta">10:52:04&ensp;·&ensp;AUTO<i class="read">read</i></span>
                       </div>
 
+                      <!-- Act 5 tail — the same CRM badge, state flipped -->
+                      <div class="stamp is-confirmed" id="m-confirmed"><span class="stamp-dot"></span>CONFIRMED&ensp;·&ensp;FRI 11:30&ensp;·&ensp;CRM-0417</div>
+
                     </div>
                   </div>
 
@@ -348,12 +351,13 @@
             </div>
           </div>
           <div class="chin" aria-hidden="true"></div>
+          <!-- dims the screen for a beat while a new act's caption lands -->
+          <div class="stage-dim" id="stage-dim" aria-hidden="true"></div>
         </div>
 
-        <div class="narration" id="narration">
-          <span class="narration-tab" id="narration-tab">INBOX</span>
-          <div class="narration-stack" id="narration-stack"></div>
-        </div>
+        <!-- Captions. Every line is its own pill so scrubbing backwards is
+             exact — swapping text on one node would desync on reverse. -->
+        <div class="caps" id="caps"></div>
 
         <!-- the message the whole sequence began with, resolving into the CTA -->
         <div class="resolve-wrap" id="resolve-wrap" aria-hidden="true">
